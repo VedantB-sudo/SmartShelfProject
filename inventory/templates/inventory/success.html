@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success | SmartShelf</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(rgba(26, 37, 47, 0.85), rgba(26, 37, 47, 0.85));
+            --success: #2ecc71;
+            --accent: #3498db;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            /* Unified warehouse background */
+            background: var(--primary-gradient), 
+                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+
+        .success-card { 
+            background: rgba(255, 255, 255, 0.98); 
+            padding: 50px 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4); 
+            text-align: center; 
+            max-width: 420px; 
+            backdrop-filter: blur(10px);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Animated Checkmark */
+        .checkmark-circle { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            background: var(--success); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin: 0 auto 30px; 
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        .checkmark { 
+            color: white; 
+            font-size: 60px; 
+            font-weight: bold;
+        }
+
+        h2 { 
+            color: var(--text-main); 
+            margin: 0 0 15px; 
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        p { 
+            color: var(--text-muted); 
+            margin-bottom: 35px; 
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .btn-home { 
+            background: var(--accent); 
+            color: white; 
+            padding: 16px 32px; 
+            text-decoration: none; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-home:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="checkmark-circle">
+            <span class="checkmark">✓</span>
+        </div>
+        <h2>Success!</h2>
+        <p>Your product has been accurately logged and updated in the <strong>SmartShelf</strong> master database.</p>
+        <a href="{% url 'dashboard' %}" class="btn-home">Return to Dashboard</a>
+    </div>
+</body>
+</html>

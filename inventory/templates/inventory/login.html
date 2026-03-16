@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartShelf | Staff Login</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(rgba(26, 37, 47, 0.8), rgba(26, 37, 47, 0.9));
+            --accent: #3498db;
+            --accent-hover: #2980b9;
+            --success: #2ecc71;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--primary-gradient), 
+                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Glassmorphism Container Effect */
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 420px;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .login-header h1 {
+            color: var(--text-main);
+            font-size: 32px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        /* Form Layout Optimization */
+        form p {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], 
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #edf2f7;
+            border-radius: 10px;
+            box-sizing: border-box;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+            background-color: #f8fafc;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            background-color: var(--white);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+            outline: none;
+        }
+
+        /* High-Conversion Button */
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-login:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-login:active {
+            transform: translateY(1px);
+        }
+
+        /* Dynamic Alert Messages */
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 25px;
+        }
+
+        .message-item {
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            text-align: center;
+            font-weight: 500;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+        }
+
+        .success {
+            background: #f0fff4;
+            color: var(--success);
+            border: 1px solid rgba(46, 204, 113, 0.2);
+        }
+
+        /* Refined Footer */
+        .footer-links {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .footer-links p {
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .footer-links a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h1>SmartShelf</h1>
+            <p>Access the Inventory Control Center</p>
+        </div>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message-item {% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <input type="hidden" name="next" value="{{ next }}">
+            
+            {{ form.as_p }}
+            
+            <button type="submit" class="btn-login">Sign In to Dashboard</button>
+        </form>
+
+        <div class="footer-links">
+            {% if user.is_authenticated and user.is_staff %}
+                <p>System Administrator? <a href="{% url 'register' %}">Register New Staff</a></p>
+            {% else %}
+                <p style="color: #94a3b8; font-weight: 500;">Authorized Personnel Only</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
