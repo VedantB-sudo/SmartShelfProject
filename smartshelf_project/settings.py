@@ -48,12 +48,8 @@ WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'smartshelf_db',
-        'USER': 'root',
-        'PASSWORD': 'admin123',  # Replace with your actual password
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
