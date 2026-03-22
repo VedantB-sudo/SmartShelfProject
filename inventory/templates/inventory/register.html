@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartShelf | Staff Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Unified Theme Palette */
         :root {
-            --primary-gradient: linear-gradient(rgba(26, 37, 47, 0.85), rgba(26, 37, 47, 0.85));
+            --primary-gradient: linear-gradient(rgba(26, 37, 47, 0.9), rgba(26, 37, 47, 0.9));
             --accent: #3498db;
             --success: #2ecc71;
+            --error: #e74c3c;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --card-bg: rgba(255, 255, 255, 0.98);
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            /* Consistent Background Image */
+            font-family: 'Inter', sans-serif;
             background: var(--primary-gradient), 
                         url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
             background-size: cover;
@@ -28,129 +29,147 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            color: var(--text-main);
         }
 
-        /* Registration Card with Glassmorphism */
         .register-container {
             background: var(--card-bg);
-            padding: 50px 40px;
+            padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
             width: 100%;
-            max-width: 480px;
+            max-width: 450px;
             margin: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideUp 0.5s ease-out;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
-            color: var(--text-main);
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             margin: 0;
-            letter-spacing: -0.5px;
             text-transform: uppercase;
+            letter-spacing: -0.5px;
+            color: #1a252f;
         }
 
         .header p {
             color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-top: 8px;
+            font-size: 0.9rem;
+            margin-top: 5px;
         }
 
-        /* Django Form Styling */
-        form p {
+        /* Django Messages Styling */
+        .messages {
+            list-style: none;
+            padding: 0;
             margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .message.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* Form Styling */
+        form p {
+            margin-bottom: 18px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            color: var(--text-main);
+            margin-bottom: 6px;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
         }
 
         input[type="text"], 
         input[type="password"], 
+        input[type="email"],
         select {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #edf2f7;
-            border-radius: 12px;
+            padding: 12px 16px;
+            border: 2px solid #f1f5f9;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            background: #f8fafc;
+            transition: all 0.2s ease;
             box-sizing: border-box;
-            font-size: 1rem;
-            background-color: #f8fafc;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         input:focus, select:focus {
-            border-color: var(--accent);
-            background-color: #ffffff;
             outline: none;
-            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
         }
 
-        /* Role Selection Box */
+        /* Specialized Role Section */
         .role-section {
             background: #f1f5f9;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
-            border-left: 5px solid var(--accent);
-            margin: 25px 0;
+            border-left: 4px solid var(--accent);
+            margin: 20px 0;
         }
 
         .role-section label {
             color: var(--accent);
         }
 
-        /* High-Visibility Button */
         .btn-register {
             width: 100%;
-            padding: 16px;
+            padding: 15px;
             background: var(--success);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .btn-register:hover {
             background: #27ae60;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3);
         }
 
         .helptext {
-            font-size: 0.75rem;
-            color: var(--text-muted);
             display: block;
-            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 5px;
             line-height: 1.4;
         }
 
         .footer {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 25px;
             padding-top: 20px;
             border-top: 1px solid #f1f5f9;
         }
@@ -158,8 +177,8 @@
         .footer a {
             color: var(--text-muted);
             text-decoration: none;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 0.9rem;
             transition: color 0.2s;
         }
 
@@ -175,6 +194,14 @@
             <h1>Create Account</h1>
             <p>Onboard New SmartShelf Personnel</p>
         </div>
+
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
 
         <form method="POST">
             {% csrf_token %}
