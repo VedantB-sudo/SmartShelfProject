@@ -29,9 +29,9 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+          session_token: ${{ secrets.AWS_SESSION_TOKEN }}
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
-          version_label: "v-${{ github.sha }}"
-          region: "us-east-1"
+          version_label: "v-${{ github.sha }}" # This ensures the version isn't null
+          region: us-east-1
           deployment_package: deploy.zip
