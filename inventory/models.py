@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Product(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=201)
     category = models.CharField(max_length=100)
     quantity = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -60,7 +60,7 @@ class Product(models.Model):
         Overrides the save method to trigger alerts automatically 
         when stock is low.
         """
-        # Define your threshold for an alert (e.g., stock < 5)
+        # Define your threshold for an alert (e.g., stock < 5).
         if self.quantity < 5:
             # We only send the alert if the product already exists (not first creation)
             # or you can remove the 'self.pk' check to alert on new low-stock items.
