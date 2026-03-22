@@ -1,0 +1,37 @@
+name: SmartShelf CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Zip Deployment Package
+        run: zip -r deploy.zip . -x "*.git*"
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+          application_name: "SmartShelf-Cloud"
+          environment_name: "SmartShelf-Cloud-env"
+          version_label: "v-${{ github.sha }}"
+          region: "us-east-1"
+          deployment_package: deploy.zip
