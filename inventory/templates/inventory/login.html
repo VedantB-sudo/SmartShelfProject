@@ -5,183 +5,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartShelf | Staff Login</title>
     <style>
+        /* Modern Reset and Variables */
         :root {
-            --primary-gradient: linear-gradient(rgba(26, 37, 47, 0.8), rgba(26, 37, 47, 0.9));
-            --accent: #3498db;
-            --accent-hover: #2980b9;
-            --success: #2ecc71;
-            --text-main: #2c3e50;
-            --text-muted: #7f8c8d;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: var(--primary-gradient), 
-                        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 24px 24px;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
+            color: var(--text-dark);
         }
 
-        /* Glassmorphism Container Effect */
+        /* Clean Card Design */
         .login-container {
-            background: rgba(255, 255, 255, 0.98);
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 420px;
-            transform: translateY(0);
-            transition: transform 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .login-container:hover {
-            transform: translateY(-5px);
+            max-width: 400px;
+            border: 1px solid var(--border);
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 2rem;
         }
 
         .login-header h1 {
-            color: var(--text-main);
-            font-size: 32px;
+            font-size: 1.75rem;
             font-weight: 800;
-            margin: 0;
-            letter-spacing: -1px;
-            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
         }
 
         .login-header p {
-            color: var(--text-muted);
-            margin-top: 8px;
-            font-size: 0.95rem;
-            font-weight: 400;
+            color: var(--text-light);
+            font-size: 0.875rem;
         }
 
-        /* Form Layout Optimization */
+        /* Form Styling */
         form p {
-            margin-bottom: 22px;
-            position: relative;
+            margin-bottom: 1.25rem;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            font-size: 0.85rem;
+            color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
         }
 
         input[type="text"], 
         input[type="password"] {
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #edf2f7;
-            border-radius: 10px;
-            box-sizing: border-box;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             font-size: 1rem;
+            transition: all 0.2s;
             background-color: #f8fafc;
         }
 
         input:focus {
-            border-color: var(--accent);
-            background-color: var(--white);
-            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
             outline: none;
+            border-color: var(--accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
-        /* High-Conversion Button */
+        /* Solid Action Button */
         .btn-login {
             width: 100%;
-            padding: 16px;
-            background: var(--accent);
+            padding: 0.75rem;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 700;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            margin-top: 0.5rem;
+            transition: background 0.2s;
         }
 
         .btn-login:hover {
-            background: var(--accent-hover);
-            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
-            transform: translateY(-1px);
+            background: #334155;
         }
 
-        .btn-login:active {
-            transform: translateY(1px);
-        }
-
-        /* Dynamic Alert Messages */
+        /* Alert Messages */
         .messages {
             list-style: none;
-            padding: 0;
-            margin-bottom: 25px;
+            margin-bottom: 1.5rem;
         }
 
         .message-item {
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 0.9rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
             text-align: center;
             font-weight: 500;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            border: 1px solid transparent;
         }
 
         .error {
-            background: var(--error-bg);
-            color: var(--error-text);
-            border: 1px solid rgba(231, 76, 60, 0.2);
+            background: #fef2f2;
+            color: var(--error);
+            border-color: #fee2e2;
         }
 
         .success {
-            background: #f0fff4;
+            background: #f0fdf4;
             color: var(--success);
-            border: 1px solid rgba(46, 204, 113, 0.2);
+            border-color: #dcfce7;
         }
 
-        /* Refined Footer */
+        /* Footer Info */
         .footer-links {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px solid #f1f5f9;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
         }
 
         .footer-links p {
-            margin: 0;
-            font-size: 0.85rem;
+            font-size: 0.8125rem;
+            color: var(--text-light);
         }
 
         .footer-links a {
             color: var(--accent);
             text-decoration: none;
-            font-weight: 700;
-            transition: color 0.2s;
+            font-weight: 600;
         }
 
         .footer-links a:hover {
-            color: var(--accent-hover);
             text-decoration: underline;
         }
     </style>
@@ -191,7 +173,7 @@
     <div class="login-container">
         <div class="login-header">
             <h1>SmartShelf</h1>
-            <p>Access the Inventory Control Center</p>
+            <p>Control Center Authorization</p>
         </div>
 
         {% if messages %}
@@ -206,19 +188,18 @@
 
         <form method="POST">
             {% csrf_token %}
-            
             <input type="hidden" name="next" value="{{ next }}">
             
             {{ form.as_p }}
             
-            <button type="submit" class="btn-login">Sign In to Dashboard</button>
+            <button type="submit" class="btn-login">Sign In</button>
         </form>
 
         <div class="footer-links">
             {% if user.is_authenticated and user.is_staff %}
-                <p>System Administrator? <a href="{% url 'register' %}">Register New Staff</a></p>
+                <p>Admin Tools: <a href="{% url 'register' %}">Register Staff</a></p>
             {% else %}
-                <p style="color: #94a3b8; font-weight: 500;">Authorized Personnel Only</p>
+                <p>Access restricted to authorized personnel.</p>
             {% endif %}
         </div>
     </div>
