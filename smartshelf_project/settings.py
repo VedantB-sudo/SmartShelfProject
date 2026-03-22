@@ -4,7 +4,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(1(7791#njihwkc@m7%7!%aetfza)-m!c9&ws$qt9gk9qeoq5k'
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['smartshelf-cloud.us-east-1.elasticbeanstalk.com']
 
 
 INSTALLED_APPS = [
