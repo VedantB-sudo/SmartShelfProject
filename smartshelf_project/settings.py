@@ -9,9 +9,7 @@ DEBUG = True
 
 # 1. Update ALLOWED_HOSTS to include your EB environment URL
 ALLOWED_HOSTS = [
-    'smartshelf-cloud-env.eba-5ykxs2mq.us-east-1.elasticbeanstalk.com',
-    'localhost',
-    '127.0.0.1'
+    'smartshelf.us-east-1.elasticbeanstalk.com'
 ]
 
 INSTALLED_APPS = [
