@@ -18,18 +18,7 @@ from .services import aws_manager
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 
-from .cloud_utils import SmartCloudManager
 
-def upload_invoice(request):
-    with SmartCloudManager() as cloud:
-        data = cloud.extract_inventory_data('my-bucket', 'invoice.jpg')
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-try:
-    from freshness_lib.checker import FreshnessAuditor
-except (ImportError, ModuleNotFoundError):
-    from freshness_lib.checker import FreshnessAuditor
 
 # 1. LOGIN: Handled via dynamic redirection
 def login_view(request):
