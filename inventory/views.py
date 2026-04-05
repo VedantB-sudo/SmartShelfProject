@@ -21,7 +21,6 @@ from django.http import HttpResponse
 from .cloud_utils import SmartCloudManager
 
 def upload_invoice(request):
-    # Using your custom library with a Context Manager
     with SmartCloudManager() as cloud:
         data = cloud.extract_inventory_data('my-bucket', 'invoice.jpg')
 
