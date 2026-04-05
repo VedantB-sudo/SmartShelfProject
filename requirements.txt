@@ -4,8 +4,7 @@ gunicorn==23.0.0
 asgiref==3.11.1
 sqlparse==0.5.5
 
-# Database Connectivity (Requires .ebextensions/01_packages.config)
-mysqlclient==2.2.7
+mysqlclient
 
 # AWS Integration (Boto3 & Storage)
 boto3==1.42.68
