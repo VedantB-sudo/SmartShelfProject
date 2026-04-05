@@ -9,12 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Updated to v4
 
       - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5  # Updated to v5
         with:
           python-version: '3.9'
+          cache: 'pip'  # Speeds up subsequent builds
 
       - name: Install Dependencies
         run: |
@@ -22,10 +23,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Zip Deployment Package
-        run: zip -r deploy.zip . -x "*.git*" "venv/*" "__pycache__/*"
+        # CRITICAL FIX: The "." ensures .ebextensions is included. 
+        # We also exclude the zip itself to keep the package small.
+        run: zip -r deploy.zip . -x "*.git*" "venv/*" "__pycache__/*" "deploy.zip"
 
       - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v21
+        uses: einaregilsson/beanstalk-deploy@v22  # Updated to v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -36,3 +39,4 @@ jobs:
           region: us-east-1
           deployment_package: deploy.zip
           existing_bucket_name: elasticbeanstalk-us-east-1-719220526263
+          wait_for_deployment: true
