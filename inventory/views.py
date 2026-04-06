@@ -18,7 +18,12 @@ from .services import aws_manager
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 
+from .cloud_utils import SmartCloudManager
 
+def upload_invoice(request):
+    with SmartCloudManager() as cloud:
+        # Example: Extract data using your library
+        data = cloud.extract_inventory_data("my-shelf-bucket", "invoice.jpg")
 
 # 1. LOGIN: Handled via dynamic redirection
 def login_view(request):
