@@ -60,7 +60,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
 # --- PRODUCTION DATABASE (AWS RDS) ---
-# Environment variables are automatically provided by Elastic Beanstalk
+# Environment variables are automatically provided by Elastic Beanstalkk
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
