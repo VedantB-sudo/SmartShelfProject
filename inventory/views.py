@@ -131,7 +131,7 @@ def generate_inventory_report(request):
     p.save()
     return response
 
-# Standard Admin Functions
+# Standard Admin Function
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
     context = {
