@@ -53,7 +53,7 @@ class SmartCloudManager:
         Private helper method to clean raw JSON into meaningful data.
         """
         extracted_data = {}
-        # Logic to map blocks to Key-Value pairs goes here
+        # Logic to map blocks to Key-Value pairs goes her
         return extracted_data
 
     def update_stock_telemetry(self, table_name, item_id, quantity):
