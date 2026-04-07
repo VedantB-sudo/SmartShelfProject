@@ -11,13 +11,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from smartshelf_project.freshness_lib.auditor import FreshnessAuditor
+
+# Updated Import: Points to the root-level 'freshness_lib' and the 'checker.py' file
+from freshness_lib.checker import FreshnessAuditor
 
 # Internal Project Imports
 from .models import Product
 from .forms import ProductForm, UserRegistrationForm
 from .services import aws_manager
-from .cloud_utils import SmartCloudManager # Your Custom Librar
+from .cloud_utils import SmartCloudManager 
 from reportlab.pdfgen import canvas
 
 # 1. AUTHENTICATION: Dynamic Redirection
@@ -66,18 +68,13 @@ def scan_product_date(request, pk):
         messages.error(request, "No image found for scanning.")
         return redirect('dashboard')
 
-    # IMPLEMENTATION: Using the Custom Library (SmartCloudManager)
-    # This demonstrates the 'Context Manager' advanced construct.
     try:
         with SmartCloudManager() as cloud:
-            # We pass the S3 bucket and the image path stored in the model
             bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             image_key = str(product.image)
             
-            # Use library method for extraction
             extracted_data = cloud.extract_inventory_data(bucket_name, image_key)
             
-            # Logic to update the model based on library output
             if extracted_data and 'expiry_date' in extracted_data:
                 product.expiry_date = extracted_data['expiry_date']
                 product.save()
@@ -98,10 +95,8 @@ def add_product(request):
         if form.is_valid():
             new_product = form.save()
             
-            # Trigger Library-based Telemetry Update & Alerts
             if new_product.quantity < 5:
                 with SmartCloudManager() as cloud:
-                    # Update DynamoDB Telemetry and send SES Alert
                     cloud.update_stock_telemetry("InventoryLog", str(new_product.id), new_product.quantity)
                     aws_manager.send_low_stock_notification(new_product.name, new_product.quantity)
             
@@ -135,8 +130,16 @@ def generate_inventory_report(request):
 # Standard Admin Function
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
+    # Retrieve all products to use with the FreshnessAuditor
+    products = Product.objects.all()
+    
+    # Logic to utilize the auditor for each item
+    for item in products:
+        auditor = FreshnessAuditor(item.name, item.category)
+        # You can add additional logic here to use the auditor instance
+        
     context = {
-        'products': Product.objects.all(),
+        'products': products,
         'all_users': User.objects.all(),
     }
     return render(request, 'inventory/admin_dashboard.html', context)
