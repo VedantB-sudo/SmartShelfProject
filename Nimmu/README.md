@@ -1,0 +1,76 @@
+SmartCloudManager
+SmartCloudManager is a high-level Python library designed to simplify and encapsulate complex AWS service interactions. Developed as part of a Master’s level Cloud Platform Programming project at the National College of Ireland, this library provides a streamlined interface for Amazon Textract, DynamoDB, S3, and SES.
+
+By abstracting low-level Boto3 API calls into a clean, object-oriented structure, SmartCloudManager allows developers to implement robust cloud-native functionalities with minimal boilerplate code.
+
+Key Features
+The library utilizes Advanced Programming Constructs to ensure efficiency and reliability:
+
+Context Manager Support: Implements __enter__ and __exit__ for safe resource handling and clean session management.
+
+Lazy Loading Pattern: AWS clients (Textract, DynamoDB, S3) are only initialized when first accessed, reducing memory overhead and improving startup performance.
+
+Automated Telemetry: Built-in methods for real-time stock updates in Amazon DynamoDB using optimized UpdateExpressions.
+
+AI-Driven Extraction: Simplified interface for Amazon Textract form analysis to convert document images into structured Python dictionaries.
+
+Installation
+You can install the library directly from PyPI using pip:
+
+Bash
+pip install smart-cloud-manager
+Requirements
+The library requires boto3. Before execution, ensure you have your AWS credentials configured in your environment or via the AWS CLI:
+
+AWS_ACCESS_KEY_ID
+
+AWS_SECRET_ACCESS_KEY
+
+AWS_SESSION_TOKEN (if using temporary credentials)
+
+AWS_DEFAULT_REGION (Defaults to us-east-1)
+
+Implementation Guide
+1. Basic Usage with Context Manager
+The recommended way to use the library is with a with statement. This ensures that resources are handled correctly according to Pythonic best practices.
+
+Python
+from smart_cloud_manager import SmartCloudManager
+
+# Initialize the manager within a context
+with SmartCloudManager(region_name="us-east-1") as cloud:
+    print("Cloud Manager session initialized successfully.")
+    # Perform operations here
+2. Document Analysis (Amazon Textract)
+The library abstracts the complex JSON response from Textract into a more manageable format for inventory applications.
+
+Python
+with SmartCloudManager() as cloud:
+    # Analyzes an invoice or document stored in S3
+    extracted_data = cloud.extract_inventory_data(
+        bucket_name="your-s3-bucket-name",
+        document_name="invoice_sample.jpg"
+    )
+    print(f"Extracted Results: {extracted_data}")
+3. Real-Time Inventory Telemetry (Amazon DynamoDB)
+Update stock levels or sensor data directly without writing raw Boto3 dictionary structures.
+
+Python
+with SmartCloudManager() as cloud:
+    success = cloud.update_stock_telemetry(
+        table_name="InventoryLog",
+        item_id="PROD-102",
+        quantity=15
+    )
+    if success:
+        print("Telemetry successfully updated in DynamoDB.")
+Technical Architecture
+This library is designed to fulfill the LO3 (formulate and produce new code libraries) and LO4 (apply advanced programming constructs) requirements of the MSCCLOUD curriculum.
+
+By separating service-specific logic from the main Django application views, the architecture promotes high cohesion and low coupling. The use of a private helper method _parse_textract_response demonstrates proper encapsulation and internal data transformation logic.
+
+License
+Distributed under the MIT License. See LICENSE for more information.
+
+Authors
+Developed for the National College of Ireland (NCI) - Cloud Platform Programming Module.

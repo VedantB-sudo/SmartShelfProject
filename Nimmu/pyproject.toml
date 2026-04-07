@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+ 
+[project]
+name = "SmartShelf-Project"
+version = "1.1.0"
+description = "A simple demo Python library"
+readme = "README.md"
+authors = [
+    { name="Vedant Bandarkar", email="vedantbandarkar@gmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.7"
+ 
+dependencies = []
+ 
+[project.urls]
+"Homepage" = "https://github.com/VedantB-sudo/SmartShelfProject"

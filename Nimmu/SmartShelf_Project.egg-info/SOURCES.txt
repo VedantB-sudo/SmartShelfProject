@@ -1,0 +1,7 @@
+README.md
+cloud_utils.py
+pyproject.toml
+SmartShelf_Project.egg-info/PKG-INFO
+SmartShelf_Project.egg-info/SOURCES.txt
+SmartShelf_Project.egg-info/dependency_links.txt
+SmartShelf_Project.egg-info/top_level.txt
