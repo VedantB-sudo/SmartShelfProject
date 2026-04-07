@@ -6,10 +6,6 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 class SmartCloudManager:
-    """
-    Custom Library for SmartShelf to encapsulate AWS Service Logic.
-    This fulfills the LO3 and LO4 requirements for the NCI Project.
-    """
 
     def __init__(self, region_name="us-east-1"):
         self.region = region_name
