@@ -1,41 +1,30 @@
-name: SmartShelf CI/CD Pipeline
+name: SmartShelf CI/CD - Deploy to AWS
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main  # Trigger only when you push to the main branch
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4  # Updated to v4
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v5  # Updated to v5
-        with:
-          python-version: '3.9'
-          cache: 'pip'  # Speeds up subsequent builds
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Zip Deployment Package
-        # CRITICAL FIX: The "." ensures .ebextensions is included. 
-        # We also exclude the zip itself to keep the package small.
+      - name: Generate Deployment Package
         run: zip -r deploy.zip . -x "*.git*" "venv/*" "__pycache__/*"
 
-      - name: Deploy to EB
+      - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }} # CRITICAL for NCI Learner Lab
           application_name: ${{ secrets.EB_APP_NAME }}
           environment_name: ${{ secrets.EB_ENV_NAME }}
           version_label: "v-${{ github.sha }}"
           region: us-east-1
           deployment_package: deploy.zip
-          existing_bucket_name: "elasticbeanstalk-us-east-1-719220526263"
+          existing_bucket_name: "smartshelf-media-storage"
