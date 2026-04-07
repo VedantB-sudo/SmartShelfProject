@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from smartshelf_project.freshness_lib.auditor import FreshnessAuditor
 
 # Internal Project Imports
 from .models import Product

@@ -3,5 +3,5 @@ pymysql
 cryptography
 boto3
 pynamodb
-gunicorn
 smartshelf-project==1.1.0
+gunicorn==23.0.0
