@@ -1,17 +1,18 @@
 import os
 from pathlib import Path
+import pymysql
 
 # --- DATABASE BRIDGE FOR ELASTIC BEANSTALK ---
-# This ensures Django uses the pure-Python driver to avoid compilation errorss
-import pymysql
+# This must remain at the top to ensure MySQL connectivity on Amazon Linux
 pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fallback')
 
-# Set DEBUG to False for productions
+# Set DEBUG to False for production
 DEBUG = False
 
+# CRITICAL: Added the Elastic Beanstalk URL to allow AWS Health Checks to pass
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -56,16 +57,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
 # --- PRODUCTION DATABASE (AWS RDS) ---
-# Environment variables are automatically provided by Elastic Beanstalkk
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        # Replace the string below with your actual RDS Endpoint
         'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
@@ -82,27 +81,29 @@ USE_I18N = True
 USE_TZ = True
 
 # --- AWS S3 STORAGE CONFIGURATION ---
-# This ensures images and CSS persist across server restarts
+# Dynamically fetch the bucket name you set in the AWS Console earlier
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'smartshelf-media-storage')
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')
-AWS_STORAGE_BUCKET_NAME = 'elasticbeanstalk-us-east-1-719220526263' # Using your existing bucket
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN') # Required for NCI Student Accounts
+
 AWS_S3_REGION_NAME = 'us-east-1'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
 
-# Static files (CSS, JavaScript, Images)
+# Static files (CSS, JavaScript)
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 
-# Media files (User-uploaded invoices/photos)
+# Media files (Inventory Photos/Labels)
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 # --- AWS SES EMAIL CONFIGURATION ---
 EMAIL_BACKEND = 'django_ses.SESBackend'
 AWS_SES_REGION_NAME = 'us-east-1'
-AWS_SES_REGION_ENDPOINT = 'email.us-east-1.amazonaws.com'
-DEFAULT_FROM_EMAIL = 'admin@smartshelf.com' # Ensure this is verified in SES Console
+DEFAULT_FROM_EMAIL = 'admin@smartshelf.com' 
 
 # --- AUTHENTICATION REDIRECTS ---
 LOGIN_URL = 'login'
