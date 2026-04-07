@@ -36,5 +36,4 @@ jobs:
           version_label: "v-${{ github.sha }}"
           region: us-east-1
           deployment_package: deploy.zip
-          # ADD THIS LINE TO FIX THE 403 ERROR:
           existing_bucket_name: elasticbeanstalk-us-east-1-719220526263
