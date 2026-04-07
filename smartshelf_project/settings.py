@@ -1,20 +1,23 @@
 import os
 from pathlib import Path
-import pymysql
 
-# --- DATABASE BRIDGE FOR ELASTIC BEANSTALK ---
-# This must remain at the top to ensure MySQL connectivity on Amazon Linux
-pymysql.install_as_MySQLdb()
-
+# --- PROJECT PATHS ---
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fallback')
 
-# Set DEBUG to False for production
+# --- SECURITY ---
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fallback')
 DEBUG = False
 
-# CRITICAL: Added the Elastic Beanstalk URL to allow AWS Health Checks to pass
-ALLOWED_HOSTS = ['*']
+# CRITICAL: Ensures health checks pass on Elastic Beanstalk
+ALLOWED_HOSTS = [
+    'smartshelf-cloud.us-east-1.elasticbeanstalk.com',
+    '.elasticbeanstalk.com',
+    'localhost',
+    '127.0.0.1',
+    '*', 
+]
 
+# --- APPLICATION DEFINITION ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -23,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inventory',
-    'storages',  # Required for AWS S3 File Storage
+    'storages',  # Required for AWS S3
 ]
 
 MIDDLEWARE = [
@@ -56,18 +59,44 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
-# --- PRODUCTION DATABASE (AWS RDS) ---
+# --- DATABASE CONFIGURATION ---
+# Since you are using DynamoDB for application data, we use SQLite for Django's 
+# internal auth/session management to avoid RDS costs.
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
+# --- AWS COMMON CREDENTIALS ---
+# These are used by both S3 and DynamoDB (via PynamoDB/Boto3)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')
+AWS_S3_REGION_NAME = 'us-east-1'
+
+# --- DYNAMODB CONFIGURATION ---
+DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', 'SmartShelf_Inventory')
+
+# --- AWS S3 STORAGE (STATIC & MEDIA) ---
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'smartshelf-media-storage')
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+
+# --- AWS SES EMAIL ---
+EMAIL_BACKEND = 'django_ses.SESBackend'
+AWS_SES_REGION_NAME = 'us-east-1'
+DEFAULT_FROM_EMAIL = 'admin@smartshelf.com' 
+
+# --- AUTHENTICATION ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -80,32 +109,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- AWS S3 STORAGE CONFIGURATION ---
-# Dynamically fetch the bucket name you set in the AWS Console earlier
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'smartshelf-media-storage')
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN') # Required for NCI Student Accounts
-
-AWS_S3_REGION_NAME = 'us-east-1'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None
-
-# Static files (CSS, JavaScript)
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
-
-# Media files (Inventory Photos/Labels)
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-
-# --- AWS SES EMAIL CONFIGURATION ---
-EMAIL_BACKEND = 'django_ses.SESBackend'
-AWS_SES_REGION_NAME = 'us-east-1'
-DEFAULT_FROM_EMAIL = 'admin@smartshelf.com' 
-
-# --- AUTHENTICATION REDIRECTS ---
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard' 
 LOGOUT_REDIRECT_URL = 'login'

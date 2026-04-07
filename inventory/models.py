@@ -1,23 +1,43 @@
-from django.db import models
-from django.utils import timezone
+import os
+import logging
+from datetime import datetime
+from pynamodb.models import Model
+from pynamodb.attributes import (
+    UnicodeAttribute, 
+    NumberAttribute, 
+    UTCDateTimeAttribute, 
+    JSONAttribute
+)
 from django.core.mail import send_mail
 from django.conf import settings
-import logging
 
-# Set up logging to track email status in your console
+# Set up logging to track SES email status
 logger = logging.getLogger(__name__)
 
-class Product(models.Model):
-    name = models.CharField(max_length=201)
-    category = models.CharField(max_length=100)
-    quantity = models.IntegerField(default=0)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    expiry_date = models.DateField()
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
-    last_audited = models.DateTimeField(auto_now=True)
+class Product(Model):
+    """
+    DynamoDB Model for SmartShelf Inventory.
+    This replaces the standard Django relational model.
+    """
+    class Meta:
+        # Matches the table name in your AWS Console
+        table_name = os.environ.get('DYNAMODB_TABLE_NAME', 'SmartShelf_Inventory')
+        region = os.environ.get('AWS_REGION', 'us-east-1')
+        
+        # Credentials for NCI Learner Lab
+        aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+        aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+        aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
-    def __str__(self):
-        return self.name
+    # Attributes (DynamoDB Schema)
+    # Using 'name' as the Hash Key (Primary Key)
+    name = UnicodeAttribute(hash_key=True)
+    category = UnicodeAttribute()
+    quantity = NumberAttribute(default=0)
+    price = NumberAttribute()
+    expiry_date = UnicodeAttribute()  # DynamoDB stores dates as strings or numbers
+    image_url = UnicodeAttribute(null=True) # S3 URL path
+    last_audited = UTCDateTimeAttribute(default=datetime.now)
 
     @property
     def calculated_status(self):
@@ -29,10 +49,9 @@ class Product(models.Model):
         return "Fresh"
 
     def send_ses_alert(self):
-        """Handles the Amazon SES Email logic"""
+        """Handles the Amazon SES Email logic using your verified email"""
         subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
         
-        # Professional Email Body
         message = (
             f"INVENTORY ALERT\n"
             f"--------------------------\n"
@@ -48,22 +67,19 @@ class Product(models.Model):
                 subject,
                 message,
                 settings.DEFAULT_FROM_EMAIL,
-                [settings.DEFAULT_FROM_EMAIL], # Sends to yourself/admin
+                [settings.DEFAULT_FROM_EMAIL],
                 fail_silently=False,
             )
-            logger.info(f"SES Alert sent for {self.name}")
+            logger.info(f"SES Alert successfully sent for {self.name}")
         except Exception as e:
             logger.error(f"Failed to send SES alert: {str(e)}")
 
-    def save(self, *args, **kwargs):
+    def save(self, **kwargs):
         """
-        Overrides the save method to trigger alerts automatically 
-        when stock is low.
+        Overrides the PynamoDB save method to trigger SES alerts 
+        automatically when stock falls below threshold.
         """
-        # Define your threshold for an alert (e.g., stock < 5).
         if self.quantity < 5:
-            # We only send the alert if the product already exists (not first creation)
-            # or you can remove the 'self.pk' check to alert on new low-stock items.
             self.send_ses_alert()
             
-        super(Product, self).save(*args, **kwargs)
+        return super(Product, self).save(**kwargs)
