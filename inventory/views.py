@@ -17,7 +17,7 @@ from smartshelf_project.freshness_lib.auditor import FreshnessAuditor
 from .models import Product
 from .forms import ProductForm, UserRegistrationForm
 from .services import aws_manager
-from .cloud_utils import SmartCloudManager # Your Custom Library
+from .cloud_utils import SmartCloudManager # Your Custom Librar
 from reportlab.pdfgen import canvas
 
 # 1. AUTHENTICATION: Dynamic Redirection
