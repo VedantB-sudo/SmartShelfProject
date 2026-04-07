@@ -9,7 +9,7 @@ pymysql.install_as_MySQLdb()
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fallback')
 
-# Set DEBUG to False for production
+# Set DEBUG to False for productions
 DEBUG = False
 
 ALLOWED_HOSTS = [
