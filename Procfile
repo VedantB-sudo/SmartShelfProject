@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:8000 --pythonpath . smartshelf_project.wsgi:application
+web: gunicorn smartshelf_project.wsgi:application

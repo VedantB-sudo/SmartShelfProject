@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # --- DATABASE BRIDGE FOR ELASTIC BEANSTALK ---
-# This ensures Django uses the pure-Python driver to avoid compilation errors
+# This ensures Django uses the pure-Python driver to avoid compilation errorss
 import pymysql
 pymysql.install_as_MySQLdb()
 
