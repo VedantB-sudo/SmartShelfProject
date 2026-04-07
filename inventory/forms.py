@@ -2,14 +2,12 @@ from django import forms
 from .models import Product
 from django.contrib.auth.models import User
 
-class ProductForm(forms.ModelForm):
-    class Meta:
-        model = Product
-        # Include 'price' in the fields list
-        fields = ['name', 'category', 'quantity', 'price', 'expiry_date', 'image']
-        widgets = {
-            'expiry_date': forms.DateInput(attrs={'type': 'date'}),
-        }
+class ProductForm(forms.Form):
+    name = forms.CharField(max_length=201)
+    category = forms.CharField(max_length=100)
+    quantity = forms.IntegerField(min_value=0)
+    price = forms.DecimalField(max_digits=10, decimal_places=2)
+    expiry_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

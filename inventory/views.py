@@ -108,17 +108,21 @@ def scan_product_date(request, pk):
 @login_required
 def add_product(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
+        form = ProductForm(request.POST)
         if form.is_valid():
-            new_product = form.save()
-            if new_product.quantity < 5:
-                with SmartCloudManager() as cloud:
-                    cloud.update_stock_telemetry("InventoryLog", str(new_product.id), new_product.quantity)
-                    aws_manager.send_low_stock_notification(new_product.name, new_product.quantity)
-            return redirect('success_page')
+            # Manually initialize the PynamoDB model
+            new_product = Product(
+                name=form.cleaned_data['name'],
+                category=form.cleaned_data['category'],
+                quantity=form.cleaned_data['quantity'],
+                price=float(form.cleaned_data['price']),
+                expiry_date=str(form.cleaned_data['expiry_date'])
+            )
+            new_product.save()
+            return redirect('dashboard')
     else:
         form = ProductForm()
-    return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Add Product'})
+    return render(request, 'inventory/add_product.html', {'form': form})
 
 @login_required
 def update_product(request, pk):
