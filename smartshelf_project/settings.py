@@ -12,11 +12,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fal
 # Set DEBUG to False for productions
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    'smartshelf-cloud.us-east-1.elasticbeanstalk.com',
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
