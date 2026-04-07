@@ -6,35 +6,54 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.conf import settings
 from django.db.models import Sum, F
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 
-# Updated Import: Points to the root-level 'freshness_lib' and the 'checker.py' file
+# Corrected library imports based on your root-level file structure
 from freshness_lib.checker import FreshnessAuditor
+from Nimmu.cloud_utils import SmartCloudManager 
 
 # Internal Project Imports
 from .models import Product
 from .forms import ProductForm, UserRegistrationForm
 from .services import aws_manager
-from .cloud_utils import SmartCloudManager 
 from reportlab.pdfgen import canvas
 
-# 1. AUTHENTICATION: Dynamic Redirection
-def login_view(request):
+# 1. USER & AUTHENTICATION MANAGEMENT
+def register_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.get_user()
+            user = form.save()
             auth_login(request, user)
-            return redirect('custom_admin' if user.is_staff else 'dashboard')
+            messages.success(request, "Registration successful.")
+            return redirect('dashboard')
     else:
-        form = AuthenticationForm()
-    return render(request, 'inventory/login.html', {'form': form})
+        form = UserRegistrationForm()
+    return render(request, 'inventory/register.html', {'form': form})
 
-# 2. DASHBOARD: Integrated with Custom Library for Telemetry
+@user_passes_test(lambda u: u.is_staff)
+def reset_user_password(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.set_password('Temporary123!')
+    user.save()
+    messages.success(request, f"Password for {user.username} reset to 'Temporary123!'.")
+    return redirect('custom_admin')
+
+@user_passes_test(lambda u: u.is_staff)
+def delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    if not user.is_superuser:
+        user.delete()
+        messages.success(request, "User deleted successfully.")
+    else:
+        messages.error(request, "Cannot delete a superuser.")
+    return redirect('custom_admin')
+
+# 2. DASHBOARD
 @login_required
 def dashboard(request):
     query = request.GET.get('search')
@@ -46,7 +65,6 @@ def dashboard(request):
     if stock_filter == 'low_stock':
         products = products.filter(quantity__lt=5)
 
-    # Use the Custom Library to fetch AI Insights
     total_items = products.count()
     low_stock_count = products.filter(quantity__lt=5).count()
     inventory_summary = f"Items: {total_items}. Low Stock: {low_stock_count}."
@@ -60,7 +78,7 @@ def dashboard(request):
     }
     return render(request, 'inventory/dashboard.html', context)
 
-# 3. ADVANCED FEATURE: AI Document Extraction via Custom Library
+# 3. ADVANCED FEATURE: AI Document Extraction
 @login_required
 def scan_product_date(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -72,49 +90,71 @@ def scan_product_date(request, pk):
         with SmartCloudManager() as cloud:
             bucket_name = settings.AWS_STORAGE_BUCKET_NAME
             image_key = str(product.image)
-            
             extracted_data = cloud.extract_inventory_data(bucket_name, image_key)
             
             if extracted_data and 'expiry_date' in extracted_data:
                 product.expiry_date = extracted_data['expiry_date']
                 product.save()
-                messages.success(request, f"Library successfully updated expiry: {product.expiry_date}")
+                messages.success(request, f"Successfully updated expiry: {product.expiry_date}")
             else:
-                messages.info(request, "Library processed image but found no date patterns.")
+                messages.info(request, "Processed image but found no date patterns.")
                 
     except Exception as e:
         messages.error(request, f"Library Error: {str(e)}")
         
     return redirect('custom_admin' if request.user.is_staff else 'dashboard')
 
-# 4. PRODUCT MANAGEMENT: With Automated Alerts
+# 4. PRODUCT MANAGEMENT: Add, Update, and Delete
 @login_required
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             new_product = form.save()
-            
             if new_product.quantity < 5:
                 with SmartCloudManager() as cloud:
                     cloud.update_stock_telemetry("InventoryLog", str(new_product.id), new_product.quantity)
                     aws_manager.send_low_stock_notification(new_product.name, new_product.quantity)
-            
-            return redirect('custom_admin' if request.user.is_staff else 'dashboard')
+            return redirect('success_page')
     else:
         form = ProductForm()
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Add Product'})
 
-# 5. REPORTING: PDF Generation
+@login_required
+def update_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Product updated successfully.")
+            return redirect('dashboard')
+    else:
+        form = ProductForm(instance=product)
+    return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Update Product'})
+
+@login_required
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        product.delete()
+        messages.success(request, "Product deleted successfully.")
+        return redirect('dashboard')
+    return render(request, 'inventory/product_confirm_delete.html', {'product': product})
+
+# 5. NAVIGATION & PAGES
+@login_required
+def success_page(request):
+    return render(request, 'inventory/success.html')
+
+# 6. REPORTING
 def generate_inventory_report(request):
     products = Product.objects.all()
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="inventory_report.pdf"'
-    
     p = canvas.Canvas(response)
     p.setFont("Helvetica-Bold", 16)
     p.drawString(100, 800, "SmartShelf Inventory Report")
-    
     y = 750
     for item in products:
         p.drawString(100, y, f"{item.name} - Qty: {item.quantity}")
@@ -122,22 +162,16 @@ def generate_inventory_report(request):
         if y < 50:
             p.showPage()
             y = 800
-    
     p.showPage()
     p.save()
     return response
 
-# Standard Admin Function
+# 7. ADMIN DASHBOARD
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
-    # Retrieve all products to use with the FreshnessAuditor
     products = Product.objects.all()
-    
-    # Logic to utilize the auditor for each item
     for item in products:
         auditor = FreshnessAuditor(item.name, item.category)
-        # You can add additional logic here to use the auditor instance
-        
     context = {
         'products': products,
         'all_users': User.objects.all(),
