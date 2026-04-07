@@ -36,4 +36,4 @@ jobs:
           version_label: "v-${{ github.sha }}"
           region: us-east-1
           deployment_package: deploy.zip
-          existing_bucket_name: elasticbeanstalk-us-east-1-719220526263
+          existing_bucket_name: smartshelf-media-storage
