@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inventory',
-    'storages',  # Required for AWS S3
+    'storages',  # Required for AWS S4
 ]
 
 MIDDLEWARE = [
