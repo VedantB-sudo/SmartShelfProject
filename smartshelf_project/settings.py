@@ -9,13 +9,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-production-fal
 DEBUG = False
 
 # CRITICAL: Ensures health checks pass on Elastic Beanstalk
-ALLOWED_HOSTS = [
-    'smartshelf-cloud.us-east-1.elasticbeanstalk.com',
-    '.elasticbeanstalk.com',
-    'localhost',
-    '127.0.0.1',
-    '*', 
-]
+ALLOWED_HOSTS = ['*']
 
 # --- APPLICATION DEFINITION ---
 INSTALLED_APPS = [
