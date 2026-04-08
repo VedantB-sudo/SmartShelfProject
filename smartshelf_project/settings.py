@@ -42,6 +42,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -54,8 +55,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
 # --- DATABASE CONFIGURATION ---
-# Since you are using DynamoDB for application data, we use SQLite for Django's 
-# internal auth/session management to avoid RDS costs.
+# Using SQLite for Django internal (Auth/Sessions) 
+# This removes the requirement for 'pymysql' or 'mysqlclient'.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -64,7 +65,6 @@ DATABASES = {
 }
 
 # --- AWS COMMON CREDENTIALS ---
-# These are used by both S3 and DynamoDB (via PynamoDB/Boto3)
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')
@@ -79,9 +79,11 @@ AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 
+# Using S3 for Static files
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 
+# Using S3 for Media files
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
@@ -103,6 +105,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# --- REDIRECTS ---
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard' 
 LOGOUT_REDIRECT_URL = 'login'
