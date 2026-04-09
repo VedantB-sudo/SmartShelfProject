@@ -66,9 +66,31 @@ def dashboard(request):
 @login_required
 def add_product(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             try:
+                expiry_date = form.cleaned_data.get('expiry_date')
+                image_url = None
+
+                if 'image' in request.FILES:
+                    image_file = request.FILES['image']
+                    image_bytes = image_file.read()
+
+                    from django.core.files.storage import default_storage
+                    unique_filename = f"products/{uuid.uuid4()}_{image_file.name}"
+                    
+                    # In python string image_file.seek(0) to reset the pointer after read()
+                    image_file.seek(0)
+                    saved_path = default_storage.save(unique_filename, image_file)
+                    image_url = default_storage.url(saved_path)
+
+                    detected_date = aws_manager.get_product_expiry_from_image(image_bytes)
+                    if detected_date:
+                        expiry_date = detected_date
+                        messages.info(request, f"Auto-detected Expiry Date via Textract: {detected_date}")
+
+                final_expiry = str(expiry_date) if expiry_date else "Unknown"
+
                 # We generate a unique SKU using uuid4 to satisfy DynamoDB requirements
                 new_product = Product(
                     sku=str(uuid.uuid4()),  # CRITICAL FIX: Provides the missing Partition Key
@@ -76,8 +98,11 @@ def add_product(request):
                     category=form.cleaned_data['category'],
                     quantity=int(form.cleaned_data['quantity']),
                     price=float(form.cleaned_data['price']),
-                    expiry_date=str(form.cleaned_data['expiry_date'])
+                    expiry_date=final_expiry
                 )
+                if image_url:
+                    new_product.image_url = image_url
+                    
                 new_product.save()
                 messages.success(request, "Product added to DynamoDB!")
                 return redirect('dashboard')
@@ -97,14 +122,35 @@ def update_product(request, sku):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
+            expiry_date = form.cleaned_data.get('expiry_date')
+            
+            if 'image' in request.FILES:
+                image_file = request.FILES['image']
+                image_bytes = image_file.read()
+                
+                from django.core.files.storage import default_storage
+                import uuid
+                unique_filename = f"products/{uuid.uuid4()}_{image_file.name}"
+                image_file.seek(0)
+                saved_path = default_storage.save(unique_filename, image_file)
+                product.image_url = default_storage.url(saved_path)
+
+                detected_date = aws_manager.get_product_expiry_from_image(image_bytes)
+                if detected_date:
+                    expiry_date = detected_date
+                    messages.info(request, f"Auto-detected Expiry Date via Textract: {detected_date}")
+
             # In DynamoDB, the Hash Key (sku) cannot be changed.
             product.name = form.cleaned_data['name']
             product.category = form.cleaned_data['category']
             product.quantity = int(form.cleaned_data['quantity'])
             product.price = float(form.cleaned_data['price'])
-            product.expiry_date = str(form.cleaned_data['expiry_date'])
+            
+            final_expiry = str(expiry_date) if expiry_date else "Unknown"
+            product.expiry_date = final_expiry
+            
             product.save()
             messages.success(request, "Product updated successfully.")
             return redirect('dashboard')

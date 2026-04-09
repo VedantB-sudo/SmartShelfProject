@@ -7,7 +7,8 @@ class ProductForm(forms.Form):
     category = forms.CharField(max_length=100)
     quantity = forms.IntegerField(min_value=0)
     price = forms.DecimalField(max_digits=10, decimal_places=2)
-    expiry_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    expiry_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}), help_text="Upload an image to auto-detect expiry")
+    image = forms.ImageField(required=False, help_text="Upload a label image to auto-detect expiry date")
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

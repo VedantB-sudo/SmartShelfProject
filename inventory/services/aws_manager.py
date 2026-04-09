@@ -21,18 +21,38 @@ def get_boto_client(service_name):
         region_name=region
     )
 
-# --- Feature 1: Image Scanning (Rekognition) ---
+import re
+import dateutil.parser
+
+# --- Feature 1: Image Scanning (Textract) ---
 def scan_product_label(image_bytes):
-    client = get_boto_client('rekognition')
+    client = get_boto_client('textract')
     
     if client is None:
-        return ["LOCAL MODE: Label scanning simulated. Text: 'Sample Product 123'"]
+        return ["LOCAL MODE: Label scanning simulated.", "Lot 123", "EXP: 2026-12-31"]
     
     try:
-        response = client.detect_text(Image={'Bytes': image_bytes})
-        return [text['DetectedText'] for text in response['TextDetections'] if text['Type'] == 'LINE']
+        response = client.detect_document_text(Document={'Bytes': image_bytes})
+        return [item['Text'] for item in response['Blocks'] if item['BlockType'] == 'LINE']
     except Exception as e:
-        return [f"Rekognition Error: {str(e)}"]
+        return [f"Textract Error: {str(e)}"]
+
+def get_product_expiry_from_image(image_bytes):
+    lines = scan_product_label(image_bytes)
+    date_patterns = [
+        r'\d{2}-\d{2}-\d{4}', r'\d{4}-\d{2}-\d{2}',
+        r'\d{2}/\d{2}/\d{4}', r'\d{4}/\d{2}/\d{2}'
+    ]
+    for line in lines:
+        for pattern in date_patterns:
+            match = re.search(pattern, line)
+            if match:
+                try:
+                    parsed_date = dateutil.parser.parse(match.group())
+                    return parsed_date.strftime('%Y-%m-%d')
+                except:
+                    continue
+    return None
 
 # --- Feature 2: Stock Alerts (SNS) ---
 def send_low_stock_notification(product_name, qty):
