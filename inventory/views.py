@@ -104,7 +104,8 @@ def add_product(request):
                     quantity=int(form.cleaned_data['quantity']),
                     price=float(form.cleaned_data['price']),
                     expiry_date=final_expiry,
-                    shelf_number=form.cleaned_data.get('shelf_number')
+                    shelf_number=form.cleaned_data.get('shelf_number'),
+                    is_perishable=form.cleaned_data.get('is_perishable', False)
                 )
                 if image_url:
                     new_product.image_url = image_url
@@ -163,6 +164,7 @@ def update_product(request, sku):
             final_expiry = str(expiry_date) if expiry_date else "Unknown"
             product.expiry_date = final_expiry
             product.shelf_number = form.cleaned_data.get('shelf_number')
+            product.is_perishable = form.cleaned_data.get('is_perishable', False)
             
             product.save()
             
@@ -181,6 +183,7 @@ def update_product(request, sku):
             'price': product.price,
             'expiry_date': product.expiry_date,
             'shelf_number': product.shelf_number,
+            'is_perishable': product.is_perishable,
         }
         form = ProductForm(initial=initial_data)
     

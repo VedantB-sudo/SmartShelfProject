@@ -6,7 +6,8 @@ from pynamodb.attributes import (
     UnicodeAttribute, 
     NumberAttribute, 
     UTCDateTimeAttribute, 
-    JSONAttribute
+    JSONAttribute,
+    BooleanAttribute
 )
 from django.core.mail import send_mail
 from django.conf import settings
@@ -39,6 +40,7 @@ class Product(Model):
     expiry_date = UnicodeAttribute()  # DynamoDB stores dates as strings or number
     image_url = UnicodeAttribute(null=True) # S3 URL path
     shelf_number = UnicodeAttribute(null=True) # Physical location on shelf
+    is_perishable = BooleanAttribute(default=False)
     last_audited = UTCDateTimeAttribute(default=datetime.now)
 
     @property

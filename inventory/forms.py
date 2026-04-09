@@ -8,6 +8,7 @@ class ProductForm(forms.Form):
     quantity = forms.IntegerField(min_value=0)
     price = forms.DecimalField(max_digits=10, decimal_places=2)
     shelf_number = forms.CharField(max_length=50, required=False, label="Shelf Number")
+    is_perishable = forms.BooleanField(required=False, label="Is Perishable?")
     expiry_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}), help_text="Upload an image to auto-detect expiry")
     image = forms.ImageField(required=False, help_text="Upload a label image to auto-detect expiry date")
 
