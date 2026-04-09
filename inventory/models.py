@@ -36,7 +36,7 @@ class Product(Model):
     category = UnicodeAttribute()
     quantity = NumberAttribute(default=0)
     price = NumberAttribute()
-    expiry_date = UnicodeAttribute()  # DynamoDB stores dates as strings or numbers
+    expiry_date = UnicodeAttribute()  # DynamoDB stores dates as strings or number
     image_url = UnicodeAttribute(null=True) # S3 URL path
     shelf_number = UnicodeAttribute(null=True) # Physical location on shelf
     last_audited = UTCDateTimeAttribute(default=datetime.now)
