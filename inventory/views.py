@@ -62,16 +62,15 @@ def dashboard(request):
     }
     return render(request, 'inventory/dashboard.html', context)
 
-# 3. ADD PRODUCT (Updated to use 'sku' and PynamoDB save)
+# 3. ADD PRODUCT
 @login_required
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
             try:
-                # Manually initialize the PynamoDB model using 'sku'
+                # Initialize the PynamoDB model using 'name' as partition key
                 new_product = Product(
-                    sku=form.cleaned_data['sku'], # Ensure SKU is in your form
                     name=form.cleaned_data['name'],
                     category=form.cleaned_data['category'],
                     quantity=int(form.cleaned_data['quantity']),
@@ -85,13 +84,13 @@ def add_product(request):
                 messages.error(request, f"DynamoDB Error: {str(e)}")
     else:
         form = ProductForm()
-    return render(request, 'inventory/add_product.html', {'form': form})
+    return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Add Product'})
 
-# 4. UPDATE & DELETE (Updated for .get() using sku)
+# 4. UPDATE & DELETE
 @login_required
-def update_product(request, sku):
+def update_product(request, name):
     try:
-        product = Product.get(sku)
+        product = Product.get(name)
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
         return redirect('dashboard')
@@ -99,7 +98,8 @@ def update_product(request, sku):
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
-            product.name = form.cleaned_data['name']
+            # In DynamoDB, the Hash Key (name) cannot be changed once created. 
+            # We ONLY update the other attributes.
             product.category = form.cleaned_data['category']
             product.quantity = int(form.cleaned_data['quantity'])
             product.price = float(form.cleaned_data['price'])
@@ -110,7 +110,6 @@ def update_product(request, sku):
     else:
         # Pre-fill form for PynamoDB object
         initial_data = {
-            'sku': product.sku,
             'name': product.name,
             'category': product.category,
             'quantity': product.quantity,
@@ -122,9 +121,9 @@ def update_product(request, sku):
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Update Product'})
 
 @login_required
-def delete_product(request, sku):
+def delete_product(request, name):
     try:
-        product = Product.get(sku)
+        product = Product.get(name)
         if request.method == 'POST':
             product.delete()
             messages.success(request, "Product deleted from DynamoDB.")
@@ -133,8 +132,6 @@ def delete_product(request, sku):
         return redirect('dashboard')
         
     return render(request, 'inventory/product_confirm_delete.html', {'product': product})
-
-# 5. REPORTING (Updated for PynamoDB)
 def generate_inventory_report(request):
     products = list(Product.scan())
     response = HttpResponse(content_type='application/pdf')
