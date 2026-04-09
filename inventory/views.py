@@ -104,6 +104,12 @@ def add_product(request):
                     new_product.image_url = image_url
                     
                 new_product.save()
+                
+                # Dispatch SNS Notification for New Stock
+                subject = f"SmartShelf: New Product Added ({new_product.name})"
+                message = f"A new product has been registered.\nName: {new_product.name}\nQuantity: {new_product.quantity}"
+                aws_manager.send_sns_alert(subject, message)
+                
                 messages.success(request, "Product added to DynamoDB!")
                 return redirect('dashboard')
             except Exception as e:
@@ -152,6 +158,12 @@ def update_product(request, sku):
             product.expiry_date = final_expiry
             
             product.save()
+            
+            # Dispatch SNS Notification for Updated Stock
+            subject = f"SmartShelf: Stock Updated ({product.name})"
+            message = f"Stock has been updated for this item.\nName: {product.name}\nNew Quantity: {product.quantity}"
+            aws_manager.send_sns_alert(subject, message)
+            
             messages.success(request, "Product updated successfully.")
             return redirect('dashboard')
     else:

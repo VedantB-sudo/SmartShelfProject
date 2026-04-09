@@ -55,15 +55,13 @@ def get_product_expiry_from_image(image_bytes):
     return None
 
 # --- Feature 2: Stock Alerts (SNS) ---
-def send_low_stock_notification(product_name, qty):
-    message = f"CRITICAL STOCK ALERT: {product_name} has fallen to {qty} units. Please reorder immediately."
-    
+def send_sns_alert(subject, message):
     client = get_boto_client('sns')
 
     # If client is None, it means we are in LOCAL MODE
     if client is None:
         print("\n" + "="*40)
-        print(f"[SIMULATED SNS ALERT]\n{message}")
+        print(f"[SIMULATED SNS ALERT]\nSubject: {subject}\nMessage: {message}")
         print("="*40 + "\n")
         return
 
@@ -73,7 +71,7 @@ def send_low_stock_notification(product_name, qty):
         client.publish(
             TopicArn=topic_arn,
             Message=message,
-            Subject="SmartShelf Low Stock Warning"
+            Subject=subject
         )
     except Exception as e:
         print(f"Failed to send real SNS alert: {e}")

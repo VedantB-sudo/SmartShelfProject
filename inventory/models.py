@@ -49,38 +49,24 @@ class Product(Model):
             return "Attention"
         return "Fresh"
 
-    def send_ses_alert(self):
-        """Handles the Amazon SES Email logic using your verified email"""
-        subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
-        
-        message = (
-            f"INVENTORY ALERT\n"
-            f"--------------------------\n"
-            f"Product: {self.name}\n"
-            f"Current Stock: {self.quantity}\n"
-            f"Status: {self.calculated_status}\n"
-            f"Category: {self.category}\n\n"
-            f"Action Required: Please restock this item immediately via the dashboard."
-        )
-        
-        try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.DEFAULT_FROM_EMAIL],
-                fail_silently=False,
-            )
-            logger.info(f"SES Alert successfully sent for {self.name}")
-        except Exception as e:
-            logger.error(f"Failed to send SES alert: {str(e)}")
-
     def save(self, **kwargs):
         """
-        Overrides the PynamoDB save method to trigger SES alerts 
+        Overrides the PynamoDB save method to trigger SNS alerts 
         automatically when stock falls below threshold.
         """
+        from .services import aws_manager
+        
         if self.quantity < 5:
-            self.send_ses_alert()
+            subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
+            message = (
+                f"INVENTORY ALERT\n"
+                f"--------------------------\n"
+                f"Product: {self.name}\n"
+                f"Current Stock: {self.quantity}\n"
+                f"Status: {self.calculated_status}\n"
+                f"Category: {self.category}\n\n"
+                f"Action Required: Please restock this item immediately via the dashboard."
+            )
+            aws_manager.send_sns_alert(subject, message)
             
         return super(Product, self).save(**kwargs)
