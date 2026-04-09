@@ -165,3 +165,13 @@ def admin_dashboard(request):
         'all_users': User.objects.all(),
     }
     return render(request, 'inventory/admin_dashboard.html', context)
+    
+@login_required
+def scan_product_date(request, pk):
+    """
+    Placeholder for the missing scan_product_date view 
+    to resolve the AttributeError in urls.py.
+    """
+    product = get_object_or_404(Product, sku=pk)
+    # Add your logic for scanning/freshness auditing here
+    return render(request, 'inventory/dashboard.html')
