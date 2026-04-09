@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid  # Required to generate the missing 'sku' key
 from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -32,16 +33,15 @@ def register_view(request):
         form = UserRegistrationForm()
     return render(request, 'inventory/register.html', {'form': form})
 
-# 2. DASHBOARD (Updated for PynamoDB Scan)
+# 2. DASHBOARD
 @login_required
 def dashboard(request):
     query = request.GET.get('search')
     stock_filter = request.GET.get('filter') 
     
-    # PynamoDB uses .scan() instead of .objects.all()
+    # PynamoDB uses .scan()
     all_products = list(Product.scan())
 
-    # Manual filtering since PynamoDB scan filtering is complex for a student project
     if query:
         all_products = [p for p in all_products if query.lower() in p.name.lower()]
     
@@ -62,15 +62,16 @@ def dashboard(request):
     }
     return render(request, 'inventory/dashboard.html', context)
 
-# 3. ADD PRODUCT
+# 3. ADD PRODUCT (Fixed for DynamoDB SKU error)
 @login_required
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
             try:
-                # Initialize the PynamoDB model using 'name' as partition key
+                # We generate a unique SKU using uuid4 to satisfy DynamoDB requirements
                 new_product = Product(
+                    sku=str(uuid.uuid4()),  # CRITICAL FIX: Provides the missing Partition Key
                     name=form.cleaned_data['name'],
                     category=form.cleaned_data['category'],
                     quantity=int(form.cleaned_data['quantity']),
@@ -86,11 +87,11 @@ def add_product(request):
         form = ProductForm()
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Add Product'})
 
-# 4. UPDATE & DELETE
+# 4. UPDATE & DELETE (Updated to use SKU for lookup)
 @login_required
-def update_product(request, name):
+def update_product(request, sku):
     try:
-        product = Product.get(name)
+        product = Product.get(sku)
     except Product.DoesNotExist:
         messages.error(request, "Product not found.")
         return redirect('dashboard')
@@ -98,8 +99,8 @@ def update_product(request, name):
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
-            # In DynamoDB, the Hash Key (name) cannot be changed once created. 
-            # We ONLY update the other attributes.
+            # In DynamoDB, the Hash Key (sku) cannot be changed.
+            product.name = form.cleaned_data['name']
             product.category = form.cleaned_data['category']
             product.quantity = int(form.cleaned_data['quantity'])
             product.price = float(form.cleaned_data['price'])
@@ -108,7 +109,6 @@ def update_product(request, name):
             messages.success(request, "Product updated successfully.")
             return redirect('dashboard')
     else:
-        # Pre-fill form for PynamoDB object
         initial_data = {
             'name': product.name,
             'category': product.category,
@@ -121,9 +121,9 @@ def update_product(request, name):
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Update Product'})
 
 @login_required
-def delete_product(request, name):
+def delete_product(request, sku):
     try:
-        product = Product.get(name)
+        product = Product.get(sku)
         if request.method == 'POST':
             product.delete()
             messages.success(request, "Product deleted from DynamoDB.")
@@ -132,6 +132,8 @@ def delete_product(request, name):
         return redirect('dashboard')
         
     return render(request, 'inventory/product_confirm_delete.html', {'product': product})
+
+# 5. REPORTS
 def generate_inventory_report(request):
     products = list(Product.scan())
     response = HttpResponse(content_type='application/pdf')
@@ -143,7 +145,9 @@ def generate_inventory_report(request):
     
     y = 750
     for item in products:
-        p.drawString(100, y, f"SKU: {item.sku} | {item.name} - Qty: {item.quantity}")
+        # Safely handle missing SKU in old items during report generation
+        item_sku = getattr(item, 'sku', 'N/A')
+        p.drawString(100, y, f"SKU: {item_sku} | {item.name} - Qty: {item.quantity}")
         y -= 20
         if y < 50:
             p.showPage()
@@ -158,6 +162,6 @@ def admin_dashboard(request):
     products = list(Product.scan())
     context = {
         'products': products,
-        'all_users': User.objects.all(), # Local Auth still uses SQLite
+        'all_users': User.objects.all(),
     }
     return render(request, 'inventory/admin_dashboard.html', context)

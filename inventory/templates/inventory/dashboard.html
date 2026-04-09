@@ -19,11 +19,7 @@
             --warning: #f59e0b;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -262,10 +258,6 @@
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card value">
-            <div class="stat-label"><i class="fas fa-chart-line"></i> Inventory Value</div>
-            <div class="stat-number">$ {{ total_value|floatformat:2 }}</div>
-        </div>
         <div class="stat-card">
             <div class="stat-label"><i class="fas fa-barcode"></i> Active SKUs</div>
             <div class="stat-number">{{ total_items }}</div>
@@ -277,6 +269,13 @@
             </div>
         </div>
     </div>
+
+    {% if ai_advice %}
+    <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 20px; margin-bottom: 30px; border-left: 6px solid #10b981; box-shadow: 0 10px 15px rgba(0,0,0,0.1);">
+        <h4 style="font-size: 0.8rem; color: #059669; text-transform: uppercase; margin-bottom: 8px;"><i class="fas fa-robot"></i> Smart Inventory Insight</h4>
+        <p style="font-size: 0.95rem; line-height: 1.5; color: #374151;">{{ ai_advice }}</p>
+    </div>
+    {% endif %}
 
     <div class="header-actions">
         <form method="GET" action="{% url 'dashboard' %}" class="search-form">
@@ -290,8 +289,8 @@
     </div>
 
     <div class="filter-group">
-        <a href="?filter=all" class="filter-btn {% if not current_filter or current_filter == 'all' %}active{% endif %}">All Inventory</a>
-        <a href="?filter=low_stock" class="filter-btn {% if current_filter == 'low_stock' %}active{% endif %}">Low Stock Alerts</a>
+        <a href="?filter=all" class="filter-btn {% if not request.GET.filter or request.GET.filter == 'all' %}active{% endif %}">All Inventory</a>
+        <a href="?filter=low_stock" class="filter-btn {% if request.GET.filter == 'low_stock' %}active{% endif %}">Low Stock Alerts</a>
     </div>
 
     {% if messages %}
@@ -312,46 +311,39 @@
                     <th>Stock</th>
                     <th>Price</th>
                     <th>Expiry</th>
-                    <th>Audit Status</th>
                     <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for entry in product_list %}
+                {% for product in products %}
                 <tr>
                     <td>
-                        {% if entry.obj.image %}
-                            <img src="{{ entry.obj.image.url }}" alt="{{ entry.obj.name }}" class="product-thumbnail" onclick="showImage('{{ entry.obj.image.url }}')">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-thumbnail" onclick="showImage('{{ product.image.url }}')">
                         {% else %}
                             <div style="width: 48px; height: 48px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; border: 2px solid #f1f5f9;">
                                 <i class="fas fa-box-open"></i>
                             </div>
                         {% endif %}
                     </td>
-                    <td><strong style="color: var(--text-main); font-weight: 700;">{{ entry.obj.name }}</strong></td>
-                    <td><span class="badge-info" style="background: #f1f5f9; color: #475569;">{{ entry.obj.category }}</span></td>
                     <td>
-                        <span style="font-weight: 800;">{{ entry.obj.quantity }}</span>
-                        {% if entry.obj.quantity < 5 %}<span class="low-pill">LOW</span>{% endif %}
+                        <strong style="color: var(--text-main); font-weight: 700;">{{ product.name }}</strong><br>
+                        <small style="color: var(--text-muted); font-size: 0.7rem;">SKU: {{ product.sku }}</small>
                     </td>
-                    <td style="font-weight: 700;">${{ entry.obj.price|floatformat:2 }}</td>
-                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ entry.obj.expiry_date|date:"M d, Y" }}</td>
+                    <td><span class="badge-info" style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem;">{{ product.category }}</span></td>
                     <td>
-                        <span class="status-badge 
-                            {% if entry.status == 'Critical' %}status-critical
-                            {% elif entry.status == 'Attention' %}status-warning
-                            {% else %}status-fresh{% endif %}">
-                            {{ entry.status }}
-                        </span>
+                        <span style="font-weight: 800;">{{ product.quantity }}</span>
+                        {% if product.quantity < 5 %}<span class="low-pill">LOW</span>{% endif %}
                     </td>
+                    <td style="font-weight: 700;">${{ product.price|floatformat:2 }}</td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ product.expiry_date }}</td>
                     <td style="text-align: right;">
-                        <a href="{% url 'scan_product_date' entry.obj.id %}" style="text-decoration: none; color: var(--primary); font-weight: 800; font-size: 0.7rem; margin-right: 12px;">SCAN</a>
-                        <a href="{% url 'update_product' entry.obj.id %}" style="text-decoration: none; color: var(--warning); font-weight: 800; font-size: 0.7rem; margin-right: 12px;">EDIT</a>
-                        <a href="{% url 'delete_product' entry.obj.id %}" style="color: var(--danger); text-decoration: none; font-weight: 800; font-size: 0.7rem;" onclick="return confirm('Delete this product permanently?')">DELETE</a>
+                        <a href="{% url 'update_product' product.sku %}" style="text-decoration: none; color: var(--warning); font-weight: 800; font-size: 0.7rem; margin-right: 12px;">EDIT</a>
+                        <a href="{% url 'delete_product' product.sku %}" style="color: var(--danger); text-decoration: none; font-weight: 800; font-size: 0.7rem;" onclick="return confirm('Delete this product permanently?')">DELETE</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="8" style="text-align: center; padding: 80px; color: var(--text-muted); font-weight: 600;">No matching products found in database.</td></tr>
+                <tr><td colspan="7" style="text-align: center; padding: 80px; color: var(--text-muted); font-weight: 600;">No matching products found in database.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
