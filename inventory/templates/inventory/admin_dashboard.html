@@ -272,7 +272,7 @@
 
             <div class="stat-card" style="border-color: #3b82f6;">
                 <h3 style="color: #3b82f6;">Inventory Value</h3>
-                <p>$ {{ total_value|floatformat:2 }}</p>
+                <p>€ {{ total_value|floatformat:2 }}</p>
             </div>
         </div>  
 
@@ -324,7 +324,7 @@
                             <span style="color: var(--danger); font-size: 0.65rem; margin-left: 5px; font-weight: 900;">LOW</span>
                         {% endif %}
                     </td>
-                    <td style="font-weight: 600;">${{ entry.obj.price|floatformat:2 }}</td>
+                    <td style="font-weight: 600;">€{{ entry.obj.price|floatformat:2 }}</td>
                     <td style="color: var(--text-muted);">{{ entry.obj.expiry_date|date:"M d, Y" }}</td>
                     <td>
                         <span class="badge-info">{{ entry.status }}</span>
