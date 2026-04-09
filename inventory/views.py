@@ -268,31 +268,44 @@ def generate_inventory_report(request):
 # 6. ADMIN DASHBOARD
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
-    products = list(Product.scan())
-    
-    total_items = len(products)
-    total_stock = sum(p.quantity for p in products if p.quantity is not None)
-    total_value = sum((p.price or 0) * (p.quantity or 0) for p in products)
-    
-    low_stock_items = [p for p in products if (p.quantity or 0) < 5]
-    
-    # Format for the master table which expects 'obj' and 'status'
-    product_list = []
-    for p in products:
-        product_list.append({
-            'obj': p,
-            'status': p.calculated_status
-        })
-    
-    context = {
-        'total_items': total_items,
-        'total_stock': total_stock,
-        'total_value': total_value,
-        'low_stock_items': low_stock_items,
-        'product_list': product_list,
-        'all_users': User.objects.all(),
-    }
-    return render(request, 'inventory/admin_dashboard.html', context)
+    try:
+        products = list(Product.scan())
+        
+        total_items = len(products)
+        
+        # Explicit type casting for safety against corrupted data
+        total_stock = 0
+        total_value = 0.0
+        
+        for p in products:
+            qty = int(p.quantity) if p.quantity is not None else 0
+            price = float(p.price) if p.price is not None else 0.0
+            total_stock += qty
+            total_value += (qty * price)
+            
+        low_stock_items = [p for p in products if (p.quantity or 0) < 5]
+        
+        # Format for the master table which expects 'obj' and 'status'
+        product_list = []
+        for p in products:
+            product_list.append({
+                'obj': p,
+                'status': p.calculated_status
+            })
+        
+        context = {
+            'total_items': total_items,
+            'total_stock': total_stock,
+            'total_value': total_value,
+            'low_stock_items': low_stock_items,
+            'product_list': product_list,
+            'all_users': User.objects.all(),
+        }
+        return render(request, 'inventory/admin_dashboard.html', context)
+    except Exception as e:
+        # Graceful fallback in case of catastrophic data corruption
+        messages.error(request, f"System Oversight Error: {str(e)}")
+        return redirect('dashboard')
     
 @login_required
 def scan_product_date(request, pk):
