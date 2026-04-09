@@ -307,6 +307,36 @@ def admin_dashboard(request):
         messages.error(request, f"System Oversight Error: {str(e)}")
         return redirect('dashboard')
     
+@user_passes_test(lambda u: u.is_staff)
+def reset_user_password(request, user_id):
+    if request.method == 'POST':
+        try:
+            target_user = User.objects.get(id=user_id)
+            new_password = request.POST.get('new_password')
+            if new_password:
+                target_user.set_password(new_password)
+                target_user.save()
+                messages.success(request, f"Password updated for {target_user.username}")
+            else:
+                messages.error(request, "Password cannot be empty.")
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+    return redirect('custom_admin')
+
+@user_passes_test(lambda u: u.is_staff)
+def delete_user(request, user_id):
+    try:
+        if request.user.id == user_id:
+            messages.error(request, "You cannot delete your own admin account.")
+        else:
+            target_user = User.objects.get(id=user_id)
+            username = target_user.username
+            target_user.delete()
+            messages.success(request, f"User '{username}' has been removed.")
+    except User.DoesNotExist:
+        messages.error(request, "User not found.")
+    return redirect('custom_admin')
+
 @login_required
 def scan_product_date(request, pk):
     """
