@@ -24,8 +24,8 @@ urlpatterns = [
 
     # Reporting
     path('generate-report/', views.generate_inventory_report, name='generate_inventory_report'),
-    path('admin/reset-password/<int:user_id>/', views.reset_user_password, name='reset_user_password'),
-    path('admin/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('custom-admin/reset-password/<int:user_id>/', views.reset_user_password, name='reset_user_password'),
+    path('custom-admin/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 ]
 
 # Static/Media files configuration
