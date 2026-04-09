@@ -124,14 +124,11 @@ def update_product(request, sku):
 def delete_product(request, sku):
     try:
         product = Product.get(sku)
-        if request.method == 'POST':
-            product.delete()
-            messages.success(request, "Product deleted from DynamoDB.")
-            return redirect('dashboard')
+        product.delete()
+        messages.success(request, "Product deleted from DynamoDB.")
+        return redirect('dashboard')
     except Product.DoesNotExist:
         return redirect('dashboard')
-        
-    return render(request, 'inventory/product_confirm_delete.html', {'product': product})
 
 # 5. REPORTS
 def generate_inventory_report(request):
