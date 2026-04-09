@@ -30,8 +30,9 @@ class Product(Model):
         aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
     # Attributes (DynamoDB Schema)
-    # Using 'name' as the Hash Key (Primary Key)
-    name = UnicodeAttribute(hash_key=True)
+    # Using 'sku' as the Hash Key (Primary Key) to match DynamoDB table schema
+    sku = UnicodeAttribute(hash_key=True)
+    name = UnicodeAttribute()
     category = UnicodeAttribute()
     quantity = NumberAttribute(default=0)
     price = NumberAttribute()

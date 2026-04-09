@@ -43,13 +43,13 @@ def dashboard(request):
     all_products = list(Product.scan())
 
     if query:
-        all_products = [p for p in all_products if query.lower() in p.name.lower()]
+        all_products = [p for p in all_products if p.name and query.lower() in p.name.lower()]
     
     if stock_filter == 'low_stock':
-        all_products = [p for p in all_products if p.quantity < 5]
+        all_products = [p for p in all_products if (p.quantity or 0) < 5]
 
     total_items = len(all_products)
-    low_stock_count = len([p for p in all_products if p.quantity < 5])
+    low_stock_count = len([p for p in all_products if (p.quantity or 0) < 5])
     
     inventory_summary = f"Items: {total_items}. Low Stock: {low_stock_count}."
     ai_advice = aws_manager.get_inventory_advice(inventory_summary)
