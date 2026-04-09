@@ -18,7 +18,12 @@ from Nimmu.cloud_utils import SmartCloudManager
 from .models import Product
 from .forms import ProductForm, UserRegistrationForm
 from .services import aws_manager
-from reportlab.pdfgen import canvas
+
+# PDF Generation Imports
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 # 1. USER & AUTHENTICATION MANAGEMENT
 def register_view(request):
@@ -197,21 +202,67 @@ def generate_inventory_report(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="inventory_report.pdf"'
     
-    p = canvas.Canvas(response)
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(100, 800, "SmartShelf Inventory Report")
+    # Create the PDF document
+    doc = SimpleDocTemplate(response, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
     
-    y = 750
-    for item in products:
-        # Safely handle missing SKU in old items during report generation
-        item_sku = getattr(item, 'sku', 'N/A')
-        p.drawString(100, y, f"SKU: {item_sku} | {item.name} - Qty: {item.quantity}")
-        y -= 20
-        if y < 50:
-            p.showPage()
-            y = 800
-    p.showPage()
-    p.save()
+    # Title
+    title = Paragraph("SmartShelf Inventory Summary Report", styles['Title'])
+    elements.append(title)
+    elements.append(Spacer(1, 12))
+    
+    # Subtitle
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    subtitle = Paragraph(f"Generated on: {timestamp}", styles['Normal'])
+    elements.append(subtitle)
+    elements.append(Spacer(1, 24))
+    
+    # Table Data
+    data = [["Product Name", "Category", "Shelf", "Expiry", "Price", "Qty"]]
+    
+    # Keep track of low stock rows for custom styling
+    low_stock_rows = []
+    
+    for idx, item in enumerate(products):
+        row = [
+            item.name,
+            item.category,
+            getattr(item, 'shelf_number', 'N/A') or 'N/A',
+            item.expiry_date,
+            f"€{float(item.price):.2f}",
+            str(item.quantity)
+        ]
+        data.append(row)
+        if item.quantity < 5:
+            # Shift by 1 because of header row
+            low_stock_rows.append(idx + 1)
+            
+    # Table Styling
+    table = Table(data, colWidths=[150, 100, 60, 80, 60, 40])
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#4f46e5")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+    ])
+    
+    # Add highlighting for low stock items
+    for row_idx in low_stock_rows:
+        style.add('BACKGROUND', (0, row_idx), (-1, row_idx), colors.lightpink)
+        style.add('TEXTCOLOR', (5, row_idx), (5, row_idx), colors.red)
+        
+    table.setStyle(style)
+    elements.append(table)
+    
+    # Build the PDF
+    doc.build(elements)
+    
     return response
 
 # 6. ADMIN DASHBOARD
