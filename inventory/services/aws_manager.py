@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 
 # This allows you to toggle AWS on/off in settings.py later
-IS_OFFLINE = True 
+IS_OFFLINE = False 
 
 def get_boto_client(service_name):
     # Safely get credentials or use 'LOCAL_KEY' as a fallback

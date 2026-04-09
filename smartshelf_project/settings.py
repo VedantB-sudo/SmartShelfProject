@@ -72,6 +72,7 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 # --- DYNAMODB CONFIGURATION ---
 DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', 'SmartShelf_Inventory')
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
 # --- AWS S3 STORAGE (STATIC & MEDIA) ---
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'smartshelf-media-storage')
