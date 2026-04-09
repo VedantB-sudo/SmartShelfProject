@@ -294,7 +294,7 @@
                         <td><strong>{{ item.name }}</strong></td>
                         <td>{{ item.category }}</td>
                         <td style="color: var(--danger); font-weight: 800;">{{ item.quantity }} units</td>
-                        <td><a href="{% url 'update_product' item.id %}" style="color: var(--primary); font-weight: 800; text-decoration: none;">RESTOCK →</a></td>
+                        <td><a href="{% url 'update_product' item.sku %}" style="color: var(--primary); font-weight: 800; text-decoration: none;">RESTOCK →</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -331,8 +331,8 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 10px;">
-                            <a href="{% url 'update_product' entry.obj.id %}" style="text-decoration: none;">✏️</a>
-                            <a href="{% url 'delete_product' entry.obj.id %}" 
+                            <a href="{% url 'update_product' entry.obj.sku %}" style="text-decoration: none;">✏️</a>
+                            <a href="{% url 'delete_product' entry.obj.sku %}" 
                                style="text-decoration: none;" 
                                onclick="return confirm('Delete this product?');">🗑️</a>
                         </div>

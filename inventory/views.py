@@ -269,8 +269,27 @@ def generate_inventory_report(request):
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
     products = list(Product.scan())
+    
+    total_items = len(products)
+    total_stock = sum(p.quantity for p in products if p.quantity is not None)
+    total_value = sum((p.price or 0) * (p.quantity or 0) for p in products)
+    
+    low_stock_items = [p for p in products if (p.quantity or 0) < 5]
+    
+    # Format for the master table which expects 'obj' and 'status'
+    product_list = []
+    for p in products:
+        product_list.append({
+            'obj': p,
+            'status': p.calculated_status
+        })
+    
     context = {
-        'products': products,
+        'total_items': total_items,
+        'total_stock': total_stock,
+        'total_value': total_value,
+        'low_stock_items': low_stock_items,
+        'product_list': product_list,
         'all_users': User.objects.all(),
     }
     return render(request, 'inventory/admin_dashboard.html', context)
