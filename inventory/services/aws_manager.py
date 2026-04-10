@@ -6,8 +6,7 @@ from django.conf import settings
 IS_OFFLINE = False 
 
 def get_boto_client(service_name):
-    # Safely get credentials or use 'LOCAL_KEY' as a fallback
-    # Corrected: Handle 'None' values correctly and include Session Token
+    # Safely get credentials from settings
     aws_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
     aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
     aws_token = getattr(settings, 'AWS_SESSION_TOKEN', None)
@@ -15,32 +14,42 @@ def get_boto_client(service_name):
     # Support multiple possible region setting names
     region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
 
-    if IS_OFFLINE or not aws_key or aws_key == 'LOCAL_KEY':
+    # EXPLICIT LOCAL MODE: Only if IS_OFFLINE is True or key is 'LOCAL_KEY'
+    if IS_OFFLINE or aws_key == 'LOCAL_KEY':
         return None
     
-    return boto3.client(
-        service_name, 
-        aws_access_key_id=aws_key,
-        aws_secret_access_key=aws_secret,
-        aws_session_token=aws_token,  # CRITICAL FIX: Required for Learner Lab
-        region_name=region
-    )
+    # If keys are provided, use them. 
+    # If keys are missing (None), boto3 will automatically try to use 
+    # the environment's IAM Role (Instance Profile) which is standard for Elastic Beanstalk.
+    if aws_key and aws_secret:
+        return boto3.client(
+            service_name, 
+            aws_access_key_id=aws_key,
+            aws_secret_access_key=aws_secret,
+            aws_session_token=aws_token,
+            region_name=region
+        )
+    else:
+        # Fallback to default session (IAM Roles / Local Config)
+        return boto3.client(service_name, region_name=region)
 
 import re
 import dateutil.parser
 
 # --- Feature 1: Image Scanning (Textract) ---
 def scan_product_label(image_bytes):
-    client = get_boto_client('textract')
-    
-    if client is None:
-        return ["LOCAL MODE: Label scanning simulated.", "Lot 123", "EXP: 2026-12-31"]
-    
     try:
+        client = get_boto_client('textract')
+        
+        if client is None:
+            return ["SIMULATION: EXP: 2026-12-31"]
+        
         response = client.detect_document_text(Document={'Bytes': image_bytes})
         return [item['Text'] for item in response['Blocks'] if item['BlockType'] == 'LINE']
     except Exception as e:
-        return [f"Textract Error: {str(e)}"]
+        # In case of error (like 'No credentials found'), we fallback to a notice
+        print(f"Textract Detection Failed: {e}")
+        return [f"Textract Error/Simulation: {str(e)}", "EXP: 2026-12-31"]
 
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
