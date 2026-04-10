@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inventory',
-    'storages',  # Required for AWS S4
+    'storages',  # Required for AWS S3
 ]
 
 MIDDLEWARE = [
@@ -55,8 +55,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'smartshelf_project.wsgi.application'
 
 # --- DATABASE CONFIGURATION ---
-# Using SQLite for Django internal (Auth/Sessions) 
-# This removes the requirement for 'pymysql' or 'mysqlclient'.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -72,7 +70,9 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 # --- DYNAMODB CONFIGURATION ---
 DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', 'SmartShelf_Inventory')
-SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
+
+AWS_SNS_REGION_NAME = 'us-east-1'
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN', 'arn:aws:sns:us-east-1:719220526263:SmartShelf_Alerts:75da5829-5f75-4217-89e5-edc7d6983530')
 
 # --- AWS S3 STORAGE (STATIC & MEDIA) ---
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'smartshelf-media-storage')
@@ -87,11 +87,6 @@ STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 # Using S3 for Media files
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-
-# --- AWS SES EMAIL ---
-EMAIL_BACKEND = 'django_ses.SESBackend'
-AWS_SES_REGION_NAME = 'us-east-1'
-DEFAULT_FROM_EMAIL = 'admin@smartshelf.com' 
 
 # --- AUTHENTICATION ---
 AUTH_PASSWORD_VALIDATORS = [
