@@ -41,6 +41,8 @@ class Product(Model):
     image_url = UnicodeAttribute(null=True) # S3 URL path
     shelf_number = UnicodeAttribute(null=True) # Physical location on shelf
     is_perishable = BooleanAttribute(default=False)
+    current_temperature = NumberAttribute(null=True) # Perishable goods tracking
+    temp_threshold = NumberAttribute(default=15.0) # High temp alert trigger
     last_audited = UTCDateTimeAttribute(default=datetime.now)
 
     @property
@@ -55,10 +57,11 @@ class Product(Model):
     def save(self, **kwargs):
         """
         Overrides the PynamoDB save method to trigger SNS alerts 
-        automatically when stock falls below threshold.
+        automatically when stock falls below threshold or temperature is too high.
         """
         from .services import aws_manager
         
+        # 1. Low Stock Alert
         if self.quantity < 5:
             subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
             message = (
@@ -66,10 +69,23 @@ class Product(Model):
                 f"--------------------------\n"
                 f"Product: {self.name}\n"
                 f"Current Stock: {self.quantity}\n"
-                f"Status: {self.calculated_status}\n"
-                f"Category: {self.category}\n\n"
-                f"Action Required: Please restock this item immediately via the dashboard."
+                f"Status: {self.calculated_status}\n\n"
+                f"Action Recommended: Please restock soon."
             )
             aws_manager.send_sns_alert(subject, message)
+
+        # 2. Thermal Alert (Perishables only)
+        if self.is_perishable and self.current_temperature is not None:
+             if self.current_temperature > self.temp_threshold:
+                 subject = f"🔥 SmartShelf CRITICAL: High Temperature on {self.name}"
+                 message = (
+                     f"THERMAL SENSOR ALERT\n"
+                     f"--------------------------\n"
+                     f"Product: {self.name}\n"
+                     f"Sensor Reading: {self.current_temperature}°C\n"
+                     f"Safe Threshold: {self.temp_threshold}°C\n\n"
+                     f"URGENT: Check cooling system or shelf placement."
+                 )
+                 aws_manager.send_sns_alert(subject, message)
             
         return super(Product, self).save(**kwargs)

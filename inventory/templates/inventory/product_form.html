@@ -165,5 +165,23 @@
         <a href="{% url 'dashboard' %}" class="btn-cancel">Return to Dashboard</a>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const perishableCheck = document.querySelector('input[name="is_perishable"]');
+            const tempInput = document.querySelector('input[name="current_temperature"]').closest('p');
+            const thresholdInput = document.querySelector('input[name="temp_threshold"]').closest('p');
+
+            function toggleTempFields() {
+                const display = perishableCheck.checked ? 'flex' : 'none';
+                tempInput.style.display = display;
+                thresholdInput.style.display = display;
+            }
+
+            if (perishableCheck) {
+                perishableCheck.addEventListener('change', toggleTempFields);
+                toggleTempFields(); // Initial state
+            }
+        });
+    </script>
 </body>
 </html>

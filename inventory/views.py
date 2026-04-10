@@ -105,7 +105,9 @@ def add_product(request):
                     price=float(form.cleaned_data['price']),
                     expiry_date=final_expiry,
                     shelf_number=form.cleaned_data.get('shelf_number'),
-                    is_perishable=form.cleaned_data.get('is_perishable', False)
+                    is_perishable=form.cleaned_data.get('is_perishable', False),
+                    current_temperature=form.cleaned_data.get('current_temperature'),
+                    temp_threshold=form.cleaned_data.get('temp_threshold')
                 )
                 if image_url:
                     new_product.image_url = image_url
@@ -165,6 +167,8 @@ def update_product(request, sku):
             product.expiry_date = final_expiry
             product.shelf_number = form.cleaned_data.get('shelf_number')
             product.is_perishable = form.cleaned_data.get('is_perishable', False)
+            product.current_temperature = form.cleaned_data.get('current_temperature')
+            product.temp_threshold = form.cleaned_data.get('temp_threshold')
             
             product.save()
             
@@ -184,6 +188,8 @@ def update_product(request, sku):
             'expiry_date': product.expiry_date,
             'shelf_number': product.shelf_number,
             'is_perishable': product.is_perishable,
+            'current_temperature': getattr(product, 'current_temperature', 20.0),
+            'temp_threshold': getattr(product, 'temp_threshold', 15.0),
         }
         form = ProductForm(initial=initial_data)
     
