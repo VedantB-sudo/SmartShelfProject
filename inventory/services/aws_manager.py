@@ -7,17 +7,22 @@ IS_OFFLINE = False
 
 def get_boto_client(service_name):
     # Safely get credentials or use 'LOCAL_KEY' as a fallback
-    aws_key = getattr(settings, 'AWS_ACCESS_KEY_ID', 'LOCAL_KEY')
-    aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', 'LOCAL_SECRET')
-    region = getattr(settings, 'AWS_REGION_NAME', 'us-east-1')
+    # Corrected: Handle 'None' values correctly and include Session Token
+    aws_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
+    aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
+    aws_token = getattr(settings, 'AWS_SESSION_TOKEN', None)
+    
+    # Support multiple possible region setting names
+    region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
 
-    if IS_OFFLINE or aws_key == 'LOCAL_KEY':
+    if IS_OFFLINE or not aws_key or aws_key == 'LOCAL_KEY':
         return None
     
     return boto3.client(
         service_name, 
         aws_access_key_id=aws_key,
         aws_secret_access_key=aws_secret,
+        aws_session_token=aws_token,  # CRITICAL FIX: Required for Learner Lab
         region_name=region
     )
 
@@ -67,7 +72,13 @@ def send_sns_alert(subject, message):
 
     # Real AWS Logic
     try:
-        topic_arn = getattr(settings, 'SNS_TOPIC_ARN', '')
+        # Robust lookup: ensure we don't pass None to Boto3
+        topic_arn = getattr(settings, 'SNS_TOPIC_ARN', None) or ''
+        
+        if not topic_arn:
+            print("SNS Error: topic_arn is empty. Set SNS_TOPIC_ARN in environment.")
+            return
+
         client.publish(
             TopicArn=topic_arn,
             Message=message,
