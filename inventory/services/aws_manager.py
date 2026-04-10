@@ -11,8 +11,11 @@ def get_boto_client(service_name):
     aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
     aws_token = getattr(settings, 'AWS_SESSION_TOKEN', None)
     
-    # Support multiple possible region setting names
-    region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
+    # Service-specific region logic
+    if service_name == 'sns':
+        region = getattr(settings, 'AWS_SNS_REGION_NAME', None) or getattr(settings, 'AWS_REGION_NAME', None) or 'us-east-1'
+    else:
+        region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
 
     # EXPLICIT LOCAL MODE: Only if IS_OFFLINE is True or key is 'LOCAL_KEY'
     if IS_OFFLINE or aws_key == 'LOCAL_KEY':
@@ -20,7 +23,7 @@ def get_boto_client(service_name):
     
     # If keys are provided, use them. 
     # If keys are missing (None), boto3 will automatically try to use 
-    # the environment's IAM Role (Instance Profile) which is standard for Elastic Beanstalk.
+    # the environment's IAM Role (Instance Profile) or environment variables.
     if aws_key and aws_secret:
         return boto3.client(
             service_name, 
@@ -30,7 +33,7 @@ def get_boto_client(service_name):
             region_name=region
         )
     else:
-        # Fallback to default session (IAM Roles / Local Config)
+        # Fallback to default session (IAM Roles / Environment Variables)
         return boto3.client(service_name, region_name=region)
 
 import re
