@@ -89,15 +89,17 @@ def send_sns_alert(subject, message):
         
         if not topic_arn:
             print("SNS Error: topic_arn is empty. Set SNS_TOPIC_ARN in environment.")
-            return
+            return False
 
         client.publish(
             TopicArn=topic_arn,
             Message=message,
             Subject=subject
         )
+        return True
     except Exception as e:
         print(f"Failed to send real SNS alert: {e}")
+        return False
 
 # --- Feature 3: AI Insights (Bedrock) ---
 def get_inventory_advice(data_summary):
