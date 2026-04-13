@@ -115,8 +115,15 @@ def add_product(request):
                 new_product.save()
                 
                 # Dispatch SNS Notification for New Stock
-                subject = f"SmartShelf: New Product Added ({new_product.name})"
-                message = f"A new product has been registered.\nName: {new_product.name}\nQuantity: {new_product.quantity}"
+                subject = f"🆕 SmartShelf: New Product Added ({new_product.name})"
+                message = (
+                    f"NEW PRODUCT REGISTERED\n"
+                    f"--------------------------\n"
+                    f"Name: {new_product.name}\n"
+                    f"Quantity: {new_product.quantity}\n"
+                    f"Category: {new_product.category}\n"
+                    f"Shelf Number: {new_product.shelf_number or 'N/A'}\n"
+                )
                 aws_manager.send_sns_alert(subject, message)
                 
                 messages.success(request, "Product added to DynamoDB!")
@@ -173,8 +180,14 @@ def update_product(request, sku):
             product.save()
             
             # Dispatch SNS Notification for Updated Stock
-            subject = f"SmartShelf: Stock Updated ({product.name})"
-            message = f"Stock has been updated for this item.\nName: {product.name}\nNew Quantity: {product.quantity}"
+            subject = f"🔄 SmartShelf: Stock Updated ({product.name})"
+            message = (
+                f"INVENTORY UPDATE\n"
+                f"--------------------------\n"
+                f"Name: {product.name}\n"
+                f"New Quantity: {product.quantity}\n"
+                f"Price: €{float(product.price):.2f}\n"
+            )
             aws_manager.send_sns_alert(subject, message)
             
             messages.success(request, "Product updated successfully.")

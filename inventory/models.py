@@ -87,5 +87,27 @@ class Product(Model):
                      f"URGENT: Check cooling system or shelf placement."
                  )
                  aws_manager.send_sns_alert(subject, message)
+
+        # 3. Expiry Alert (Near-perish notifications)
+        try:
+            from dateutil import parser
+            from datetime import date
+            if self.expiry_date and self.expiry_date != "Unknown":
+                expiry_dt = parser.parse(self.expiry_date).date()
+                days_left = (expiry_dt - date.today()).days
+                
+                if 0 <= days_left <= 3:
+                    subject = f"⏳ SmartShelf Alert: {self.name} is about to perish"
+                    message = (
+                        f"EXPIRY ALERT\n"
+                        f"--------------------------\n"
+                        f"Product: {self.name}\n"
+                        f"Expiry Date: {self.expiry_date}\n"
+                        f"Days Remaining: {days_left}\n\n"
+                        f"Action: Please prioritize usage or discount this item."
+                    )
+                    aws_manager.send_sns_alert(subject, message)
+        except Exception as e:
+            logger.error(f"Error checking expiry date for SNS: {e}")
             
         return super(Product, self).save(**kwargs)
