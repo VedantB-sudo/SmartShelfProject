@@ -21,9 +21,9 @@ def get_boto_client(service_name):
     if IS_OFFLINE or aws_key == 'LOCAL_KEY':
         return None
     
-    # If keys are provided, use them. 
-    # If keys are missing (None), boto3 will automatically try to use 
-    # the environment's IAM Role (Instance Profile) or environment variables.
+    # Zero-Hardcoding: We pass credentials ONLY if both are explicitly set in the environment.
+    # Otherwise, Boto3 will automatically pick up Cloud9 Managed Credentials, 
+    # IAM Roles, or ~/.aws/credentials.
     if aws_key and aws_secret:
         return boto3.client(
             service_name, 
@@ -32,9 +32,9 @@ def get_boto_client(service_name):
             aws_session_token=aws_token,
             region_name=region
         )
-    else:
-        # Fallback to default session (IAM Roles / Environment Variables)
-        return boto3.client(service_name, region_name=region)
+    
+    # Cloud-Native Fallback (Cloud9 / EC2 / GitHub Actions)
+    return boto3.client(service_name, region_name=region)
 
 import re
 import dateutil.parser
