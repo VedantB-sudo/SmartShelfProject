@@ -11,16 +11,19 @@ def get_boto_client(service_name):
     aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
     aws_token = getattr(settings, 'AWS_SESSION_TOKEN', None)
     
-    # Support multiple possible region setting names
-    region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
+    # Service-specific region logic
+    if service_name == 'sns':
+        region = getattr(settings, 'AWS_SNS_REGION_NAME', None) or getattr(settings, 'AWS_REGION_NAME', None) or 'us-east-1'
+    else:
+        region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
 
     # EXPLICIT LOCAL MODE: Only if IS_OFFLINE is True or key is 'LOCAL_KEY'
     if IS_OFFLINE or aws_key == 'LOCAL_KEY':
         return None
     
-    # If keys are provided, use them. 
-    # If keys are missing (None), boto3 will automatically try to use 
-    # the environment's IAM Role (Instance Profile) which is standard for Elastic Beanstalk.
+    # Zero-Hardcoding: We pass credentials ONLY if both are explicitly set in the environment.
+    # Otherwise, Boto3 will automatically pick up Cloud9 Managed Credentials, 
+    # IAM Roles, or ~/.aws/credentials.
     if aws_key and aws_secret:
         return boto3.client(
             service_name, 
@@ -29,9 +32,9 @@ def get_boto_client(service_name):
             aws_session_token=aws_token,
             region_name=region
         )
-    else:
-        # Fallback to default session (IAM Roles / Local Config)
-        return boto3.client(service_name, region_name=region)
+    
+    # Cloud-Native Fallback (Cloud9 / EC2 / GitHub Actions)
+    return boto3.client(service_name, region_name=region)
 
 import re
 import dateutil.parser
@@ -86,15 +89,17 @@ def send_sns_alert(subject, message):
         
         if not topic_arn:
             print("SNS Error: topic_arn is empty. Set SNS_TOPIC_ARN in environment.")
-            return
+            return False
 
         client.publish(
             TopicArn=topic_arn,
             Message=message,
             Subject=subject
         )
+        return True
     except Exception as e:
         print(f"Failed to send real SNS alert: {e}")
+        return False
 
 # --- Feature 3: AI Insights (Bedrock) ---
 def get_inventory_advice(data_summary):

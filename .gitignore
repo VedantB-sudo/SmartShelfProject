@@ -12,6 +12,7 @@ media/
 .env
 .venv
 venv/
+venv_win/
 env/
 ENV/
 
