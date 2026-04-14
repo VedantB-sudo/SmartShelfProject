@@ -48,20 +48,34 @@ def scan_product_label(image_bytes):
 
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
+    # If Textract didn't find any text, return None
+    if not lines:
+        return None
+
     date_patterns = [
-        r'\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4}',  # Added [\. ] to catch 14.04.2026
-        r'\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2}',
-        r'\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?\d{2,4}', # Added ? for optional space
-        r'(?:EXP|BB|BBE)[:\s]*(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4})' # Specifically looks for EXP: or BBE:
+        # Catch: 30 04 2012 or 30/04/2012 or 30.04.2012
+        r'\d{1,2}[\s\./-]\d{1,2}[\s\./-]\d{2,4}', 
+        
+        # Catch: SEP 29 or 29 SEP 2026
+        r'\d{0,2}\s?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?\d{0,4}',
+        
+        # Catch: EXP 04/26 or BB 30 04 2012
+        r'(?:EXP|BB|BBE|BEST BEFORE)[:\s]*([\d\s\./-]+)',
+        
+        # Standard ISO: 2026-12-31
+        r'\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2}'
     ]
+
     for line in lines:
         for pattern in date_patterns:
             match = re.search(pattern, line, re.IGNORECASE)
             if match:
                 try:
-                    parsed_date = dateutil.parser.parse(match.group(), dayfirst=True)
+                    # dayfirst=True is better for European date formats (DD/MM/YYYY)
+                    date_str = match.group(1) if len(match.groups()) > 0 else match.group()
+                    parsed_date = dateutil.parser.parse(date_str, dayfirst=True)
                     return parsed_date.strftime('%Y-%m-%d')
-                except:
+                except Exception:
                     continue
     return None
 
