@@ -6,24 +6,17 @@ from django.conf import settings
 IS_OFFLINE = False 
 
 def get_boto_client(service_name):
-    # Safely get credentials from settings
     aws_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
     aws_secret = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
     aws_token = getattr(settings, 'AWS_SESSION_TOKEN', None)
     
-    # Service-specific region logic
     if service_name == 'sns':
-        region = getattr(settings, 'AWS_SNS_REGION_NAME', None) or getattr(settings, 'AWS_REGION_NAME', None) or 'us-east-1'
+        region = getattr(settings, 'AWS_SNS_REGION_NAME', 'us-east-1')
     else:
-        region = getattr(settings, 'AWS_REGION_NAME', None) or getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
+        region = getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
 
-    # EXPLICIT LOCAL MODE: Only if IS_OFFLINE is True or key is 'LOCAL_KEY'
-    if IS_OFFLINE or aws_key == 'LOCAL_KEY':
-        return None
-    
-    # Zero-Hardcoding: We pass credentials ONLY if both are explicitly set in the environment.
-    # Otherwise, Boto3 will automatically pick up Cloud9 Managed Credentials, 
-    # IAM Roles, or ~/.aws/credentials.
+    # FIX: Allow Boto3 to initialize without explicit keys 
+    # if they are already in the environment (Cloud9/EB standard)
     if aws_key and aws_secret:
         return boto3.client(
             service_name, 
@@ -33,7 +26,6 @@ def get_boto_client(service_name):
             region_name=region
         )
     
-    # Cloud-Native Fallback (Cloud9 / EC2 / GitHub Actions)
     return boto3.client(service_name, region_name=region)
 
 import re

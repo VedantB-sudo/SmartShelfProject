@@ -55,24 +55,19 @@ class Product(Model):
         return "Fresh"
 
     def save(self, **kwargs):
-        """
-        Overrides the PynamoDB save method to trigger SNS alerts 
-        automatically when stock falls below threshold or temperature is too high.
-        """
-        from .services import aws_manager
-        
-        # 1. Low Stock Alert
-        if self.quantity < 5:
-            subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
-            message = (
-                f"INVENTORY ALERT\n"
-                f"--------------------------\n"
-                f"Product: {self.name}\n"
-                f"Current Stock: {self.quantity}\n"
-                f"Status: {self.calculated_status}\n\n"
-                f"Action Recommended: Please restock soon."
-            )
-            aws_manager.send_sns_alert(subject, message)
+    # Import inside the method to prevent circular import with views
+    from .services import aws_manager
+    
+    # Trigger original save first to ensure data is in DynamoDB
+    res = super(Product, self).save(**kwargs)
+
+    # 1. Low Stock Alert (Threshold < 5)
+    if int(self.quantity) < 5:
+        subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
+        message = f"Product: {self.name}\nRemaining: {self.quantity}"
+        aws_manager.send_sns_alert(subject, message)
+    
+    return res
 
         # 2. Thermal Alert (Perishables only)
         if self.is_perishable and self.current_temperature is not None:
