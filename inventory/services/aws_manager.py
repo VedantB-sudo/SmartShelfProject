@@ -33,18 +33,19 @@ import dateutil.parser
 
 # --- Feature 1: Image Scanning (Textract) ---
 def scan_product_label(image_bytes):
+    client = boto3.client('textract', region_name='us-east-1')
     try:
-        client = get_boto_client('textract')
-        
-        if client is None:
-            return ["SIMULATION: EXP: 2026-12-31"]
-        
+        # Use detect_document_text for simple OCR
         response = client.detect_document_text(Document={'Bytes': image_bytes})
-        return [item['Text'] for item in response['Blocks'] if item['BlockType'] == 'LINE']
+        
+        detected_lines = []
+        for block in response['Blocks']:
+            if block['BlockType'] == 'LINE':
+                detected_lines.append(block['Text'])
+        return detected_lines
     except Exception as e:
-        # In case of error (like 'No credentials found'), we fallback to a notice
-        print(f"Textract Detection Failed: {e}")
-        return [f"Textract Error/Simulation: {str(e)}", "EXP: 2026-12-31"]
+        print(f"Textract Error: {e}")
+        return []
 
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
