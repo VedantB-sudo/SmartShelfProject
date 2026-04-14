@@ -55,21 +55,38 @@ class Product(Model):
         return "Fresh"
 
     def save(self, **kwargs):
-        # This line MUST be indented 4 spaces
         from .services import aws_manager
         
-        # Trigger original save first
+        # Save the product first
         res = super(Product, self).save(**kwargs)
 
-        # 1. Low Stock Alert logic
+        # Formatted Low Stock Alert
         try:
             if int(self.quantity) < 5:
-                subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
-                message = f"Product: {self.name}\nRemaining: {self.quantity}"
-                aws_manager.send_sns_alert(subject, message)
+                subject = f"🔔 SmartShelf: Low Stock Alert - {self.name}"
+                
+                # Using triple quotes for a clean, multi-line email format
+                message = f"""
+Hello,
+
+This is an automated alert from your SmartShelf Intelligent Inventory System.
+
+PRODUCT DETAILS:
+-------------------------------
+Item Name:    {self.name}
+Current Stock: {self.quantity}
+Threshold:     5 units
+Status:        LOW STOCK
+
+Please restock this item soon to avoid inventory depletion.
+
+View Dashboard: http://smartcloud.us-east-1.elasticbeanstalk.com/dashboard/
+-------------------------------
+SmartShelf Cloud-Native System
+                """
+                
+                aws_manager.send_sns_alert(subject, message.strip())
         except Exception as e:
-            # We use a try/except so the product still saves 
-            # even if SNS fails
             print(f"SNS failed: {e}")
         
         return res
