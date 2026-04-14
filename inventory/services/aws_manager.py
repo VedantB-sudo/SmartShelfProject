@@ -30,7 +30,7 @@ def get_boto_client(service_name):
     
     return boto3.client(service_name, region_name=region)
 
-# --- Feature 1: Image Scanning (Textract) ---
+# --- Feature 1: Image Scanning (Textract) --
 def scan_product_label(image_bytes):
     try:
         client = get_boto_client('textract')
