@@ -9,7 +9,9 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-
+import io
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 # Corrected library imports
 from freshness_lib.checker import FreshnessAuditor
 from Nimmu.cloud_utils import SmartCloudManager 
@@ -83,8 +85,7 @@ def add_product(request):
 
                     from django.core.files.storage import default_storage
                     unique_filename = f"products/{uuid.uuid4()}_{image_file.name}"
-                    
-                    # In python string image_file.seek(0) to reset the pointer after read()
+                
                     image_file.seek(0)
                     saved_path = default_storage.save(unique_filename, image_file)
                     image_url = default_storage.url(saved_path)
@@ -221,11 +222,12 @@ def delete_product(request, sku):
 # 5. REPORTS
 def generate_inventory_report(request):
     products = list(Product.scan())
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="inventory_report.pdf"'
     
-    # Create the PDF document
-    doc = SimpleDocTemplate(response, pagesize=letter)
+    # Use a BytesIO buffer to hold the PDF data in memory
+    buffer = io.BytesIO()
+    
+    # Create the PDF document using the buffer instead of the response
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
     
@@ -242,8 +244,6 @@ def generate_inventory_report(request):
     
     # Table Data
     data = [["Product Name", "Category", "Shelf", "Expiry", "Price", "Qty"]]
-    
-    # Keep track of low stock rows for custom styling
     low_stock_rows = []
     
     for idx, item in enumerate(products):
@@ -257,7 +257,6 @@ def generate_inventory_report(request):
         ]
         data.append(row)
         if item.quantity < 5:
-            # Shift by 1 because of header row
             low_stock_rows.append(idx + 1)
             
     # Table Styling
@@ -274,7 +273,6 @@ def generate_inventory_report(request):
         ('FONTSIZE', (0, 1), (-1, -1), 10),
     ])
     
-    # Add highlighting for low stock items
     for row_idx in low_stock_rows:
         style.add('BACKGROUND', (0, row_idx), (-1, row_idx), colors.lightpink)
         style.add('TEXTCOLOR', (5, row_idx), (5, row_idx), colors.red)
@@ -282,9 +280,31 @@ def generate_inventory_report(request):
     table.setStyle(style)
     elements.append(table)
     
-    # Build the PDF
+    # Build the PDF into the buffer
     doc.build(elements)
     
+    # --- NEW: Upload to S3 and Send SNS Alert ---
+    buffer.seek(0)
+    report_filename = f"reports/inventory_report_{uuid.uuid4().hex[:8]}.pdf"
+    
+    # Save the file to S3
+    saved_path = default_storage.save(report_filename, ContentFile(buffer.read()))
+    report_url = default_storage.url(saved_path)
+    
+    # Send SNS Notification with the link
+    subject = "📊 SmartShelf: Inventory Report Generated"
+    message = (
+        f"A new inventory summary report has been generated.\n\n"
+        f"You can download or view the PDF here:\n"
+        f"{report_url}\n\n"
+        f"Generated at: {timestamp}"
+    )
+    aws_manager.send_sns_alert(subject, message)
+    
+    # Return the PDF to the user's browser as before
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="inventory_report.pdf"'
     return response
 
 # 6. ADMIN DASHBOARD

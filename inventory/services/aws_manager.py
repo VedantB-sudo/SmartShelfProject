@@ -48,16 +48,18 @@ def scan_product_label(image_bytes):
 
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
+    # Added more patterns to capture common label formats
     date_patterns = [
-        r'\d{2}-\d{2}-\d{4}', r'\d{4}-\d{2}-\d{2}',
-        r'\d{2}/\d{2}/\d{4}', r'\d{4}/\d{2}/\d{2}'
+        r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}',  # 14-04-2026 or 4/14/26
+        r'\d{4}[-/]\d{1,2}[-/]\d{1,2}',  # 2026-04-14
+        r'\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{2,4}', # 14 Apr 2026
     ]
     for line in lines:
         for pattern in date_patterns:
-            match = re.search(pattern, line)
+            match = re.search(pattern, line, re.IGNORECASE)
             if match:
                 try:
-                    parsed_date = dateutil.parser.parse(match.group())
+                    parsed_date = dateutil.parser.parse(match.group(), dayfirst=True)
                     return parsed_date.strftime('%Y-%m-%d')
                 except:
                     continue
