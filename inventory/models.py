@@ -55,19 +55,24 @@ class Product(Model):
         return "Fresh"
 
     def save(self, **kwargs):
-    # Import inside the method to prevent circular import with views
-    from .services import aws_manager
-    
-    # Trigger original save first to ensure data is in DynamoDB
-    res = super(Product, self).save(**kwargs)
+        # This line MUST be indented 4 spaces
+        from .services import aws_manager
+        
+        # Trigger original save first
+        res = super(Product, self).save(**kwargs)
 
-    # 1. Low Stock Alert (Threshold < 5)
-    if int(self.quantity) < 5:
-        subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
-        message = f"Product: {self.name}\nRemaining: {self.quantity}"
-        aws_manager.send_sns_alert(subject, message)
-    
-    return res
+        # 1. Low Stock Alert logic
+        try:
+            if int(self.quantity) < 5:
+                subject = f"⚠️ SmartShelf Alert: Low Stock on {self.name}"
+                message = f"Product: {self.name}\nRemaining: {self.quantity}"
+                aws_manager.send_sns_alert(subject, message)
+        except Exception as e:
+            # We use a try/except so the product still saves 
+            # even if SNS fails
+            print(f"SNS failed: {e}")
+        
+        return res
 
         # 2. Thermal Alert (Perishables only)
         if self.is_perishable and self.current_temperature is not None:
