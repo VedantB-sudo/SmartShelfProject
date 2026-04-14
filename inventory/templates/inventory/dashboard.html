@@ -17,6 +17,7 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --info: #0ea5e9;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -222,6 +223,16 @@
         .product-thumbnail:hover { transform: scale(1.15); border-color: var(--primary); }
         
         .low-pill { background: var(--danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; margin-left: 5px; vertical-align: middle; }
+        
+        /* Action Links Styling */
+        .action-link {
+            text-decoration: none; 
+            font-weight: 800; 
+            font-size: 0.7rem; 
+            margin-right: 12px;
+            transition: opacity 0.2s;
+        }
+        .action-link:hover { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -353,8 +364,11 @@
                     <td style="font-weight: 700;">€{{ product.price|floatformat:2 }}</td>
                     <td style="color: var(--text-muted); font-size: 0.85rem;">{{ product.expiry_date }}</td>
                     <td style="text-align: right;">
-                        <a href="{% url 'update_product' product.sku %}" style="text-decoration: none; color: var(--warning); font-weight: 800; font-size: 0.7rem; margin-right: 12px;">EDIT</a>
-                        <a href="{% url 'delete_product' product.sku %}" style="color: var(--danger); text-decoration: none; font-weight: 800; font-size: 0.7rem;" onclick="return confirm('Delete this product permanently?')">DELETE</a>
+                        {% if product.image_url %}
+                            <a href="{% url 'manual_scan' product.sku %}" class="action-link" style="color: var(--info);">SCAN</a>
+                        {% endif %}
+                        <a href="{% url 'update_product' product.sku %}" class="action-link" style="color: var(--warning);">EDIT</a>
+                        <a href="{% url 'delete_product' product.sku %}" class="action-link" style="color: var(--danger);" onclick="return confirm('Delete this product permanently?')">DELETE</a>
                     </td>
                 </tr>
                 {% empty %}

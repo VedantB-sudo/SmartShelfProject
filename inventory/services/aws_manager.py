@@ -1,6 +1,8 @@
 import boto3
 import json
 from django.conf import settings
+import re
+import dateutil.parser
 
 # This allows you to toggle AWS on/off in settings.py later
 IS_OFFLINE = False 
@@ -28,32 +30,27 @@ def get_boto_client(service_name):
     
     return boto3.client(service_name, region_name=region)
 
-import re
-import dateutil.parser
-
 # --- Feature 1: Image Scanning (Textract) ---
 def scan_product_label(image_bytes):
-    client = boto3.client('textract', region_name='us-east-1')
     try:
-        # Use detect_document_text for simple OCR
-        response = client.detect_document_text(Document={'Bytes': image_bytes})
+        client = get_boto_client('textract')
         
-        detected_lines = []
-        for block in response['Blocks']:
-            if block['BlockType'] == 'LINE':
-                detected_lines.append(block['Text'])
-        return detected_lines
-    except Exception as e:
-        print(f"Textract Error: {e}")
-        return []
-
+        if client is None:
+            return ["SIMULATION: EXP: 2026-12-31"]
+        
+        response = client.detect_document_text(Document={'Bytes': image_bytes})
+        lines = [item['Text'] for item in response['Blocks'] if item['BlockType'] == 'LINE']
+        print(f"DEBUG Textract detected: {lines}") # This will show up in your EB Logs
+        return lines
+     
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
     # Added more patterns to capture common label formats
     date_patterns = [
-        r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}',  # 14-04-2026 or 4/14/26
-        r'\d{4}[-/]\d{1,2}[-/]\d{1,2}',  # 2026-04-14
-        r'\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{2,4}', # 14 Apr 2026
+        r'\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4}',  # Added [\. ] to catch 14.04.2026
+        r'\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2}',
+        r'\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?\d{2,4}', # Added ? for optional space
+        r'(?:EXP|BB|BBE)[:\s]*(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4})' # Specifically looks for EXP: or BBE:
     ]
     for line in lines:
         for pattern in date_patterns:

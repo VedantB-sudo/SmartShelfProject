@@ -21,6 +21,7 @@ urlpatterns = [
     path('product/add/', views.add_product, name='add_product'),
     path('product/edit/<str:sku>/', views.update_product, name='update_product'),
     path('product/delete/<str:sku>/', views.delete_product, name='delete_product'),
+    path('product/scan/<str:sku>/', views.manual_scan_expiry, name='manual_scan'),
 
     # Reporting
     path('generate-report/', views.generate_inventory_report, name='generate_inventory_report'),
