@@ -42,10 +42,12 @@ def scan_product_label(image_bytes):
         lines = [item['Text'] for item in response['Blocks'] if item['BlockType'] == 'LINE']
         print(f"DEBUG Textract detected: {lines}") # This will show up in your EB Logs
         return lines
-     
+    except Exception as e:
+        print(f"Textract Error: {e}")
+        return []
+
 def get_product_expiry_from_image(image_bytes):
     lines = scan_product_label(image_bytes)
-    # Added more patterns to capture common label formats
     date_patterns = [
         r'\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4}',  # Added [\. ] to catch 14.04.2026
         r'\d{4}[-/\.]\d{1,2}[-/\.]\d{1,2}',
