@@ -4,7 +4,7 @@ from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAt
 class InventoryItem(Model):
     class Meta:
         table_name = "SmartShelf_Inventory"
-        region = 'us-east-1'  # Change to your AWS region
+        region = 'us-east-1'  # Change to your AWS regio
 
     # Primary Key (Partition Key)
     sku = UnicodeAttribute(hash_key=True)
